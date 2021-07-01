@@ -53,6 +53,10 @@ void PlayMethodScene::LoadAssets()
 
 
     // グラフィックリソースの初期化処理
+
+    //説明画面
+    playMethodSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"playMethodSceneSprite.png");
+
 }
 
 // Releasing resources required for termination.
@@ -88,6 +92,11 @@ NextScene PlayMethodScene::Update(const float deltaTime)
     // TODO: Add your game logic here.
     //ゲームを動かすプログラムを記述する
 
+    //シーン遷移
+    if (DXTK->KeyEvent->pressed.Space || (DXTK->GamePadEvent[0].a == GamePad::ButtonStateTracker::PRESSED))
+    {
+        return NextScene::MainScene;
+    }
 
 
     return NextScene::Continue;
@@ -106,6 +115,8 @@ void PlayMethodScene::Render()
 
     // (ここに2D描画の処理が入る)     // 手順5
 
+    //説明画面
+    DX9::SpriteBatch->DrawSimple(playMethodSprite.Get(), SimpleMath::Vector3(0.0f, 0.0f, 0.0f));
 
 
     DX9::SpriteBatch->End();          // 手順6
@@ -130,3 +141,7 @@ void PlayMethodScene::Render()
     DXTK->Direct3D9->WaitUpdate();
     DXTK->ExecuteCommandList();
 }
+
+//Update内関数定義
+
+//シーン遷移

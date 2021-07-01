@@ -41,6 +41,11 @@ private:
 
     // •Ï”‚ÌéŒ¾
 
+    //à–¾‰æ–Ê
+    DX9::SPRITE playMethodSprite;
 
+
+private:
+    //ƒV[ƒ“‘JˆÚ
 
 };

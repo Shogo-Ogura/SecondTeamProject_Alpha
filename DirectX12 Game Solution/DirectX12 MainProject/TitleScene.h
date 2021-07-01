@@ -13,7 +13,7 @@ using namespace DirectX;
 
 class TitleScene final : public Scene {
 public:
-    TitleScene();
+    TitleScene() {};
     virtual ~TitleScene() { Terminate(); }
 
     TitleScene(TitleScene&&) = default;
@@ -41,6 +41,11 @@ private:
 
     // 変数の宣言
 
+    //タイトル画面
+    DX9::SPRITE titleSceneSprite;
 
+
+private:
+    //シーン遷移
 
 };

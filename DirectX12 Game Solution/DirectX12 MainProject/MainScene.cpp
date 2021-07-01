@@ -46,14 +46,14 @@ void MainScene::Initialize()
     playerSpeedStatus = smallFishSpeedState;
 
 
-    //虫(アイテム)
+    //餌(アイテム)
     wormPositionX = 1500.0f;
     wormPositionY = 300.0f;
 
-    //虫位置リセット
+    //餌位置リセット
     std::random_device rnd_dev;
     randomEngine = std::mt19937(rnd_dev());
-    randomWormPositionY = std::uniform_int_distribution<int>(playerMoveRangeTop, playerMoveRangeBottom);
+    randomWormPositionY = std::uniform_real_distribution<float>(wormAppearanceTop, wormAppearanceBottom);
 
 
     //障害物
@@ -78,7 +78,7 @@ void MainScene::Initialize()
     obstacleStatus = bigRockState;
 
     //ランダムリセット座標
-    randomObstaclePositionY = std::uniform_int_distribution<int>(playerMoveRangeTop, playerMoveRangeBottom);
+    randomObstaclePositionY = std::uniform_real_distribution<float>(obstacleAppearanceTop, obstacleAppearanceBottom);
     obstacleInitialPositionY = randomObstaclePositionY(randomEngine);
 
     //ランダム
@@ -138,7 +138,7 @@ void MainScene::LoadAssets()
     largeFishTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"carpTestSprite.png");
 
 
-    //虫(アイテム)
+    //餌(アイテム)
     //wormTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"wormTestSprite.png");
     wormTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"wormSprite.png");
 
@@ -234,11 +234,11 @@ NextScene MainScene::Update(const float deltaTime)
     playerControlGamepadUpdate(deltaTime);
 
 
-    //虫(アイテム)
+    //餌(アイテム)
     //移動
     wormMoveUpdate(deltaTime);
 
-    //虫再出現
+    //餌再出現
     //wormReAppearanceUpdate(deltaTime);
 
     //障害物
@@ -293,7 +293,7 @@ void MainScene::Render()
     }
 
 
-    //虫(アイテム)
+    //餌(アイテム)
     DX9::SpriteBatch->DrawSimple(wormTestSprite.Get(), SimpleMath::Vector3(wormPositionX, wormPositionY, 0));
 
 
@@ -319,8 +319,8 @@ void MainScene::Render()
 
 
     //デバッグ用
-    //DX9::SpriteBatch->DrawString(playerStatusFont.Get(), SimpleMath::Vector2(0, 670), DX9::Colors::RGBA(0, 0, 0, 255), L"playerStatus:%d", playerStatus+1);
-    //DX9::SpriteBatch->DrawString(gaugeStageFont.Get(), SimpleMath::Vector2(230, 670), DX9::Colors::RGBA(0, 0, 0, 255), L"gaugeStage:%d", gaugeStage+1);
+    DX9::SpriteBatch->DrawString(playerStatusFont.Get(), SimpleMath::Vector2(0, 670), DX9::Colors::RGBA(0, 0, 0, 255), L"wormInitialPositionY:%d", wormInitialPositionY);
+    DX9::SpriteBatch->DrawString(gaugeStageFont.Get(), SimpleMath::Vector2(500, 670), DX9::Colors::RGBA(0, 0, 0, 255), L"obstacleInitialPositionY:%d", obstaclePattern);
 
 
     DX9::SpriteBatch->End();          // 手順6
@@ -338,7 +338,7 @@ void MainScene::Render()
     spriteBatch->Draw(
         dx9GpuDescriptor,
         XMUINT2(1280, 720),
-        SimpleMath::Vector2(0.0f, 0.0f)
+        SimpleMath::Vector2(0.0f,0.0f)
     );
     spriteBatch->End();
 
@@ -611,7 +611,7 @@ void MainScene::playerControlGamepadUpdate(const float deltaTime)
 }
 
 
-//虫(アイテム)
+//餌(アイテム)
 //移動
 void MainScene::wormMoveUpdate(const float deltaTime)
 {
@@ -624,7 +624,7 @@ void MainScene::wormMoveUpdate(const float deltaTime)
     }
 }
 
-//虫再出現
+//餌再出現
 void MainScene::wormReAppearanceUpdate(const float deltaTime)
 {
     if (wormPositionX <= wormResetPositionX || wormCollisionDetectionUpdate()) 
@@ -642,7 +642,7 @@ void MainScene::wormPositionResetUpdate()
     wormPositionY = wormInitialPositionY;
 }
 
-//虫当たり判定
+//餌当たり判定
 bool MainScene::wormCollisionDetectionUpdate()
 {
     if (PlayerCollisionDetection(RectWH(wormPositionX, wormPositionY, wormScaleX, wormScaleY)))

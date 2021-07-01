@@ -130,26 +130,30 @@ private:
     };
 
 
-    //虫(アイテム)
+    //餌(アイテム)
     DX9::SPRITE wormTestSprite;
     float wormPositionX, wormPositionY;
 
-    //虫サイズ
+    //餌サイズ
     enum {
         wormScaleX = 80,
         wormScaleY = 70
     };
 
-    //虫初期位置
+    //餌初期位置
     const float wormInitialPositionX = 1500.0f;
 
-    //虫リセット位置
+    //餌リセット位置
     const float wormResetPositionX = -100.0f;
 
-    //虫ランダム初期位置
+    //餌ランダム初期位置
     std::mt19937 randomEngine;
-    std::uniform_int_distribution<int> randomWormPositionY;
-    int wormInitialPositionY;
+    std::uniform_real_distribution<float> randomWormPositionY;
+    float wormInitialPositionY;
+
+    //餌出現範囲
+    const float wormAppearanceTop = 251.0f;
+    const float wormAppearanceBottom = 1000.0f;
 
 
     //障害物
@@ -176,12 +180,16 @@ private:
     const float obstacleResetPositionX = -300.0f;
 
     //障害物ランダム初期位置
-    std::uniform_int_distribution<int> randomObstaclePositionY;
-    int obstacleInitialPositionY;
+    std::uniform_real_distribution<float> randomObstaclePositionY;
+    float obstacleInitialPositionY;
 
     //障害物ランダムパターン
     std::uniform_int_distribution<int> randomObstacle;
     int obstaclePattern;
+
+    //障害物出現範囲
+    const float obstacleAppearanceTop = 251.0f;
+    const float obstacleAppearanceBottom = 510.0f;
 
     //障害物サイズ
     enum obstacleScale {
@@ -263,17 +271,17 @@ private:
     void playerControlGamepadUpdate(const float deltaTime);
 
 
-    //虫(アイテム)
-    //虫移動
+    //餌(アイテム)
+    //餌移動
     void wormMoveUpdate(const float deltaTime);
 
-    //虫再出現
+    //餌再出現
     void wormReAppearanceUpdate(const float deltaTime);
 
-    //虫位置リセット
+    //餌位置リセット
     void wormPositionResetUpdate();
     
-    //虫当たり判定
+    //餌当たり判定
     bool wormCollisionDetectionUpdate();
 
 

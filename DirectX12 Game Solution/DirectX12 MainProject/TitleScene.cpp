@@ -7,12 +7,6 @@
 #include "SceneFactory.h"
 
 // Initialize member variables.
-TitleScene::TitleScene() : dx9GpuDescriptor{}
-{
-    //コンストラクター
-    //変数の初期化（0にする）
-
-}
 
 // Initialize a variable and audio resources.
 void TitleScene::Initialize()
@@ -53,6 +47,9 @@ void TitleScene::LoadAssets()
 
 
     // グラフィックリソースの初期化処理
+
+    //タイトル画面
+    titleSceneSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"titleSceneSprite.png");
 }
 
 // Releasing resources required for termination.
@@ -88,9 +85,11 @@ NextScene TitleScene::Update(const float deltaTime)
     // TODO: Add your game logic here.
     //ゲームを動かすプログラムを記述する
 
-
-
-    return NextScene::Continue;
+    //シーン遷移
+    if (DXTK->KeyEvent->pressed.Space || (DXTK->GamePadEvent[0].a == GamePad::ButtonStateTracker::PRESSED))
+    {
+        return NextScene::PlayMethodScene;
+    }
 }
 
 // Draws the scene.
@@ -106,6 +105,8 @@ void TitleScene::Render()
 
     // (ここに2D描画の処理が入る)     // 手順5
 
+    //タイトル画面
+    DX9::SpriteBatch->DrawSimple(titleSceneSprite.Get(), SimpleMath::Vector3(0.0f, 0.0f, 0.0f));
 
 
     DX9::SpriteBatch->End();          // 手順6
@@ -130,3 +131,9 @@ void TitleScene::Render()
     DXTK->Direct3D9->WaitUpdate();
     DXTK->ExecuteCommandList();
 }
+
+//Update内関数の定義
+
+//シーン遷移
+
+    
