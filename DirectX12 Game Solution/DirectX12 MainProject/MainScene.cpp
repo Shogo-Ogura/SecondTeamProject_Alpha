@@ -47,13 +47,13 @@ void MainScene::Initialize()
 
 
     //餌(アイテム)
-    wormPositionX = 1500.0f;
-    wormPositionY = 300.0f;
+    feedPositionX = 1500.0f;
+    feedPositionY = 300.0f;
 
     //餌位置リセット
     std::random_device rnd_dev;
     randomEngine = std::mt19937(rnd_dev());
-    randomWormPositionY = std::uniform_real_distribution<float>(wormAppearanceTop, wormAppearanceBottom);
+    randomFeedPositionY = std::uniform_real_distribution<float>(feedAppearanceTop, feedAppearanceBottom);
 
 
     //障害物
@@ -139,8 +139,8 @@ void MainScene::LoadAssets()
 
 
     //餌(アイテム)
-    //wormTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"wormTestSprite.png");
-    wormTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"wormSprite.png");
+    //feedTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"wormTestSprite.png");
+    feedTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"wormSprite.png");
 
 
     //障害物
@@ -204,10 +204,10 @@ NextScene MainScene::Update(const float deltaTime)
     //ゲームを動かすプログラムを記述する
 
     //背景
-    bgMoveUpdate(deltaTime);
+    bgLoopUpdate(deltaTime);
 
     //スクロール速度
-    shiftBgMoveSpeed(deltaTime);
+    bgMoveSpeedUpdate(deltaTime);
 
     //スクロース速度割当
     setBgScrollSpeed();
@@ -236,7 +236,7 @@ NextScene MainScene::Update(const float deltaTime)
 
     //餌(アイテム)
     //移動
-    wormMoveUpdate(deltaTime);
+    feedMoveUpdate(deltaTime);
 
     //餌再出現
     //wormReAppearanceUpdate(deltaTime);
@@ -294,7 +294,7 @@ void MainScene::Render()
 
 
     //餌(アイテム)
-    DX9::SpriteBatch->DrawSimple(wormTestSprite.Get(), SimpleMath::Vector3(wormPositionX, wormPositionY, 0));
+    DX9::SpriteBatch->DrawSimple(feedTestSprite.Get(), SimpleMath::Vector3(feedPositionX, feedPositionY, 0));
 
 
     //障害物
@@ -319,7 +319,7 @@ void MainScene::Render()
 
 
     //デバッグ用
-    DX9::SpriteBatch->DrawString(playerStatusFont.Get(), SimpleMath::Vector2(0, 670), DX9::Colors::RGBA(0, 0, 0, 255), L"wormInitialPositionY:%d", wormInitialPositionY);
+    DX9::SpriteBatch->DrawString(playerStatusFont.Get(), SimpleMath::Vector2(0, 670), DX9::Colors::RGBA(0, 0, 0, 255), L"wormInitialPositionY:%d", feedInitialPositionY);
     DX9::SpriteBatch->DrawString(gaugeStageFont.Get(), SimpleMath::Vector2(500, 670), DX9::Colors::RGBA(0, 0, 0, 255), L"obstacleInitialPositionY:%d", obstaclePattern);
 
 
@@ -349,15 +349,8 @@ void MainScene::Render()
 //Update内関数の定義
 
 //背景
-void MainScene::bgMoveUpdate(const float deltaTime)
-{
-    //位置リセット
-    if (bgPositionX <= -bgResetPosition)
-        bgPositionX = 0;
-}
-
 //スクロール速度
-void MainScene::shiftBgMoveSpeed(const float deltaTime)
+void MainScene::bgMoveSpeedUpdate(const float deltaTime)
 {
     switch (playerSpeedStatus) {
     case smallFishSpeedState:
@@ -381,7 +374,14 @@ void MainScene::shiftBgMoveSpeed(const float deltaTime)
     }
 }
 
-//スクロール速度割当
+//背景ループ
+void MainScene::bgLoopUpdate(const float deltaTime)
+{
+    if (bgPositionX <= -bgResetPosition)
+        bgPositionX = 0;
+}
+
+//スクロール速度変更
 void MainScene::setBgScrollSpeed()
 {
     switch (playerStatus){
@@ -395,7 +395,7 @@ void MainScene::setBgScrollSpeed()
         playerSpeedStatus = largeFishSpeedState;
         break;
     }
-    if (playerStatus == largeFishState && wormCollisionDetectionUpdate())
+    if (playerStatus == largeFishState && feedCollisionDetectionUpdate())
     {
         playerSpeedStatus = speedUpState;
     }
@@ -416,21 +416,27 @@ void MainScene::gaugePlayerStateAssignUpdate()
     }
 }
 
+//ゴール
+NextScene MainScene::changeNextSceneUpdate()
+{
+
+}
+
 //状態遷移
 void MainScene::gaugeStageUpdate(const float deltaTime)
 {
     switch (gaugeStage) {
     case firstStage:
-        if (wormCollisionDetectionUpdate())
+        if (feedCollisionDetectionUpdate())
         {
-            wormReAppearanceUpdate(deltaTime);
+            feedReAppearanceUpdate(deltaTime);
             gaugeStage = secondStage;
         }
         break;
     case secondStage:
-        if (wormCollisionDetectionUpdate())
+        if (feedCollisionDetectionUpdate())
         {
-            wormReAppearanceUpdate(deltaTime);
+            feedReAppearanceUpdate(deltaTime);
             gaugeStage = thirdStage;
         }
         else if (obstacleCollisionDetectionUpdate())
@@ -440,9 +446,9 @@ void MainScene::gaugeStageUpdate(const float deltaTime)
         }
         break;
     case thirdStage:
-        if (wormCollisionDetectionUpdate())
+        if (feedCollisionDetectionUpdate())
         {
-            wormReAppearanceUpdate(deltaTime);
+            feedReAppearanceUpdate(deltaTime);
             gaugeStage = forthStage;
         }
         else if (obstacleCollisionDetectionUpdate())
@@ -452,9 +458,9 @@ void MainScene::gaugeStageUpdate(const float deltaTime)
         }
         break;
     case forthStage:
-        if (wormCollisionDetectionUpdate())
+        if (feedCollisionDetectionUpdate())
         {
-            wormReAppearanceUpdate(deltaTime);
+            feedReAppearanceUpdate(deltaTime);
             gaugeStage = fifthStage;
         }
         else if (obstacleCollisionDetectionUpdate())
@@ -464,9 +470,9 @@ void MainScene::gaugeStageUpdate(const float deltaTime)
         }
         break;
     case fifthStage:
-        if (wormCollisionDetectionUpdate())
+        if (feedCollisionDetectionUpdate())
         {
-            wormReAppearanceUpdate(deltaTime);
+            feedReAppearanceUpdate(deltaTime);
         }
         else if (obstacleCollisionDetectionUpdate())
         {
@@ -613,39 +619,39 @@ void MainScene::playerControlGamepadUpdate(const float deltaTime)
 
 //餌(アイテム)
 //移動
-void MainScene::wormMoveUpdate(const float deltaTime)
+void MainScene::feedMoveUpdate(const float deltaTime)
 {
-    wormPositionX -= 350 * deltaTime;
+    feedPositionX -= 350 * deltaTime;
 
     //ループ
-    if (wormPositionX <= -200)
+    if (feedPositionX <= -200)
     {
-        wormPositionX = 1500;
+        feedPositionX = 1500;
     }
 }
 
 //餌再出現
-void MainScene::wormReAppearanceUpdate(const float deltaTime)
+void MainScene::feedReAppearanceUpdate(const float deltaTime)
 {
-    if (wormPositionX <= wormResetPositionX || wormCollisionDetectionUpdate()) 
+    if (feedPositionX <= feedResetPositionX || feedCollisionDetectionUpdate()) 
     {
-        wormPositionResetUpdate();
+        feedPositionResetUpdate();
     }
 }
 
 //位置リセット
-void MainScene::wormPositionResetUpdate()
+void MainScene::feedPositionResetUpdate()
 {
-    wormInitialPositionY = randomWormPositionY(randomEngine);
+    feedInitialPositionY = randomFeedPositionY(randomEngine);
 
-    wormPositionX = wormInitialPositionX;
-    wormPositionY = wormInitialPositionY;
+    feedPositionX = feedInitialPositionX;
+    feedPositionY = feedInitialPositionY;
 }
 
 //餌当たり判定
-bool MainScene::wormCollisionDetectionUpdate()
+bool MainScene::feedCollisionDetectionUpdate()
 {
-    if (PlayerCollisionDetection(RectWH(wormPositionX, wormPositionY, wormScaleX, wormScaleY)))
+    if (PlayerCollisionDetection(RectWH(feedPositionX, feedPositionY, feedScaleX, feedScaleY)))
         return true;
     else
         return false;

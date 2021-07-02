@@ -93,13 +93,7 @@ NextScene PlayMethodScene::Update(const float deltaTime)
     //ゲームを動かすプログラムを記述する
 
     //シーン遷移
-    if (DXTK->KeyEvent->pressed.Space || (DXTK->GamePadEvent[0].a == GamePad::ButtonStateTracker::PRESSED))
-    {
-        return NextScene::MainScene;
-    }
-
-
-    return NextScene::Continue;
+    return changeMainScene();
 }
 
 // Draws the scene.
@@ -145,3 +139,12 @@ void PlayMethodScene::Render()
 //Update内関数定義
 
 //シーン遷移
+NextScene PlayMethodScene::changeMainScene()
+{
+    if (DXTK->KeyEvent->pressed.Space || (DXTK->GamePadEvent[0].a == GamePad::ButtonStateTracker::PRESSED))
+    {
+        return NextScene::MainScene;
+    }
+
+    return NextScene::Continue;
+}

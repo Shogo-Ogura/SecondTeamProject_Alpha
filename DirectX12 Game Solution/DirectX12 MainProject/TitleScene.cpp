@@ -7,6 +7,12 @@
 #include "SceneFactory.h"
 
 // Initialize member variables.
+TitleScene::TitleScene() : dx9GpuDescriptor{}
+{
+    //コンストラクター
+    //変数の初期化（0にする）
+
+}
 
 // Initialize a variable and audio resources.
 void TitleScene::Initialize()
@@ -86,10 +92,7 @@ NextScene TitleScene::Update(const float deltaTime)
     //ゲームを動かすプログラムを記述する
 
     //シーン遷移
-    if (DXTK->KeyEvent->pressed.Space || (DXTK->GamePadEvent[0].a == GamePad::ButtonStateTracker::PRESSED))
-    {
-        return NextScene::PlayMethodScene;
-    }
+    return changePlayMethodScene();
 }
 
 // Draws the scene.
@@ -135,5 +138,12 @@ void TitleScene::Render()
 //Update内関数の定義
 
 //シーン遷移
+NextScene TitleScene::changePlayMethodScene()
+{
+    if (DXTK->KeyEvent->pressed.Space || (DXTK->GamePadEvent[0].a == GamePad::ButtonStateTracker::PRESSED))
+    {
+        return NextScene::PlayMethodScene;
+    }
 
-    
+    return NextScene::Continue;
+}

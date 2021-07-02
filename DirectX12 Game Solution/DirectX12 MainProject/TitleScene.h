@@ -13,7 +13,7 @@ using namespace DirectX;
 
 class TitleScene final : public Scene {
 public:
-    TitleScene() {};
+    TitleScene() ;
     virtual ~TitleScene() { Terminate(); }
 
     TitleScene(TitleScene&&) = default;
@@ -47,5 +47,5 @@ private:
 
 private:
     //ƒV[ƒ“‘JˆÚ
-
+    NextScene changePlayMethodScene();
 };

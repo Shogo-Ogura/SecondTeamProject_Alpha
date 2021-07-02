@@ -47,5 +47,5 @@ private:
 
 private:
     //ƒV[ƒ“‘JˆÚ
-
+    NextScene changeMainScene();
 };

@@ -131,29 +131,29 @@ private:
 
 
     //餌(アイテム)
-    DX9::SPRITE wormTestSprite;
-    float wormPositionX, wormPositionY;
+    DX9::SPRITE feedTestSprite;
+    float feedPositionX, feedPositionY;
 
     //餌サイズ
     enum {
-        wormScaleX = 80,
-        wormScaleY = 70
+        feedScaleX = 80,
+        feedScaleY = 70
     };
 
     //餌初期位置
-    const float wormInitialPositionX = 1500.0f;
+    const float feedInitialPositionX = 1500.0f;
 
     //餌リセット位置
-    const float wormResetPositionX = -100.0f;
+    const float feedResetPositionX = -100.0f;
 
     //餌ランダム初期位置
     std::mt19937 randomEngine;
-    std::uniform_real_distribution<float> randomWormPositionY;
-    float wormInitialPositionY;
+    std::uniform_real_distribution<float> randomFeedPositionY;
+    float feedInitialPositionY;
 
     //餌出現範囲
-    const float wormAppearanceTop = 251.0f;
-    const float wormAppearanceBottom = 1000.0f;
+    const float feedAppearanceTop = 251.0f;
+    const float feedAppearanceBottom = 1000.0f;
 
 
     //障害物
@@ -241,13 +241,17 @@ private:
     //Update内関数の定義
 
     //背景
-    void bgMoveUpdate(const float deltaTime);
-
     //スクロール速度
-    void shiftBgMoveSpeed(const float deltaTime);
+    void bgMoveSpeedUpdate(const float deltaTime);
 
-    //スクロール速度割当
+    //背景ループ
+    void bgLoopUpdate(const float deltaTime);
+
+    //スクロール速度変更
     void setBgScrollSpeed();
+
+    //ゴール
+    NextScene changeNextSceneUpdate();
 
 
     //状態遷移割当
@@ -273,16 +277,16 @@ private:
 
     //餌(アイテム)
     //餌移動
-    void wormMoveUpdate(const float deltaTime);
+    void feedMoveUpdate(const float deltaTime);
 
     //餌再出現
-    void wormReAppearanceUpdate(const float deltaTime);
+    void feedReAppearanceUpdate(const float deltaTime);
 
     //餌位置リセット
-    void wormPositionResetUpdate();
+    void feedPositionResetUpdate();
     
     //餌当たり判定
-    bool wormCollisionDetectionUpdate();
+    bool feedCollisionDetectionUpdate();
 
 
     //障害物
