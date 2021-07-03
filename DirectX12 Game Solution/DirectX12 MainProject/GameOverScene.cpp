@@ -53,6 +53,8 @@ void GameOverScene::LoadAssets()
 
 
     // グラフィックリソースの初期化処理
+
+    gameoverSceneSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"gameoverSceneSprite.png");
 }
 
 // Releasing resources required for termination.
@@ -106,7 +108,7 @@ void GameOverScene::Render()
 
     // (ここに2D描画の処理が入る)     // 手順5
 
-
+    DX9::SpriteBatch->DrawSimple(gameoverSceneSprite.Get(), SimpleMath::Vector3(0.0f, 0.0f, 0.0f));
 
     DX9::SpriteBatch->End();          // 手順6
     DXTK->Direct3D9->EndScene();      // 手順7

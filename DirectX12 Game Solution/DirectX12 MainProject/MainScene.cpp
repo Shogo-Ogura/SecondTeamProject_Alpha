@@ -5,6 +5,7 @@
 #include "Base/pch.h"
 #include "Base/dxtk.h"
 #include "SceneFactory.h"
+#include "DontDestroyOnLoad.h"
 
 // Initialize member variables.
 MainScene::MainScene() : dx9GpuDescriptor{}
@@ -24,6 +25,11 @@ void MainScene::Initialize()
     //背景
     bgPositionX = 0.0f;
 
+    //ループカウント
+    loopCount = 0;
+
+    //クリア時間
+    DontDestroy->clearTime = 0.0f;
 
     //ゲージ段階
     gaugeStage = firstStage;
@@ -209,8 +215,14 @@ NextScene MainScene::Update(const float deltaTime)
     //スクロール速度
     bgMoveSpeedUpdate(deltaTime);
 
-    //スクロース速度割当
+    //スクロール速度割当
     setBgScrollSpeed();
+
+    //ゴール
+    return changeNextSceneUpdate();
+
+    //クリア時間計測
+    playTimeUpdate(deltaTime);
 
 
     //状態遷移割当
@@ -239,7 +251,7 @@ NextScene MainScene::Update(const float deltaTime)
     feedMoveUpdate(deltaTime);
 
     //餌再出現
-    //wormReAppearanceUpdate(deltaTime);
+    feedReAppearanceUpdate(deltaTime);
 
     //障害物
     //移動
@@ -257,8 +269,6 @@ NextScene MainScene::Update(const float deltaTime)
     //ゲージ
     gaugeMoveUpdate();
    
-
-    return NextScene::Continue;
 }
 
 // Draws the scene.
@@ -320,7 +330,7 @@ void MainScene::Render()
 
     //デバッグ用
     DX9::SpriteBatch->DrawString(playerStatusFont.Get(), SimpleMath::Vector2(0, 670), DX9::Colors::RGBA(0, 0, 0, 255), L"wormInitialPositionY:%d", feedInitialPositionY);
-    DX9::SpriteBatch->DrawString(gaugeStageFont.Get(), SimpleMath::Vector2(500, 670), DX9::Colors::RGBA(0, 0, 0, 255), L"obstacleInitialPositionY:%d", obstaclePattern);
+    DX9::SpriteBatch->DrawString(gaugeStageFont.Get(), SimpleMath::Vector2(500.0f, 670.0f), DX9::Colors::RGBA(0, 0, 0, 255), L"obstacleInitialPositionY:%d", obstaclePattern);
 
 
     DX9::SpriteBatch->End();          // 手順6
@@ -377,8 +387,10 @@ void MainScene::bgMoveSpeedUpdate(const float deltaTime)
 //背景ループ
 void MainScene::bgLoopUpdate(const float deltaTime)
 {
-    if (bgPositionX <= -bgResetPosition)
+    if (bgPositionX <= -bgResetPosition) {
         bgPositionX = 0;
+        ++loopCount;
+    }
 }
 
 //スクロール速度変更
@@ -419,8 +431,20 @@ void MainScene::gaugePlayerStateAssignUpdate()
 //ゴール
 NextScene MainScene::changeNextSceneUpdate()
 {
+    if (loopCount >= 10)
+    {
+        return NextScene::GameClearScene;
+    }
 
+    return NextScene::Continue;
 }
+
+//クリア時間計測
+void MainScene::playTimeUpdate(const float deltaTime)
+{
+    DontDestroy->clearTime += deltaTime;
+}
+
 
 //状態遷移
 void MainScene::gaugeStageUpdate(const float deltaTime)
@@ -582,11 +606,11 @@ void MainScene::playerControlGamepadUpdate(const float deltaTime)
     //十字キー
     if (DXTK->GamePadState[0].IsDPadRightPressed())
     {
-        playerInertiaX = playerInertiaX + deltaTime * (gamepadButtonPlayerMoveSpeedRight - playerInertiaX);
+        playerInertiaX = playerInertiaX + deltaTime * (gamePadButtonPlayerMoveSpeedRight - playerInertiaX);
     }
     if (DXTK->GamePadState[0].IsDPadLeftPressed())
     {
-        playerInertiaX = playerInertiaX + deltaTime * (gamepadButtonPlayerMoveSpeedLeft - playerInertiaX);
+        playerInertiaX = playerInertiaX + deltaTime * (gamePadButtonPlayerMoveSpeedLeft - playerInertiaX);
     }
     if (!DXTK->GamePadState[0].IsDPadRightPressed() && !DXTK->GamePadState[0].IsDPadLeftPressed())
     {
@@ -598,11 +622,11 @@ void MainScene::playerControlGamepadUpdate(const float deltaTime)
 
     if (DXTK->GamePadState[0].IsDPadDownPressed())
     {
-        playerInertiaY = playerInertiaY + deltaTime * (gamepadButtonPlayerMoveSpeedDown - playerInertiaY);
+        playerInertiaY = playerInertiaY + deltaTime * (gamePadButtonPlayerMoveSpeedDown - playerInertiaY);
     }
     if (DXTK->GamePadState[0].IsDPadUpPressed())
     {
-        playerInertiaY = playerInertiaY + deltaTime * (gamepadButtonPlayerMoveSpeedUp - playerInertiaY);
+        playerInertiaY = playerInertiaY + deltaTime * (gamePadButtonPlayerMoveSpeedUp - playerInertiaY);
     }
     if (!DXTK->GamePadState[0].IsDPadDownPressed() && !DXTK->GamePadState[0].IsDPadUpPressed())
     {
@@ -612,8 +636,8 @@ void MainScene::playerControlGamepadUpdate(const float deltaTime)
     playerPositionY += playerInertiaY;
 
     //スティック
-    playerPositionX += gamepadPlayerMoveSpeedX * DXTK->GamePadState[0].thumbSticks.leftX * deltaTime;
-    playerPositionY -= gamepadPlayerMoveSpeedY * DXTK->GamePadState[0].thumbSticks.leftY * deltaTime;
+    playerPositionX += gamePadPlayerMoveSpeedX * DXTK->GamePadState[0].thumbSticks.leftX * deltaTime;
+    playerPositionY -= gamePadPlayerMoveSpeedY * DXTK->GamePadState[0].thumbSticks.leftY * deltaTime;
 }
 
 
@@ -622,12 +646,6 @@ void MainScene::playerControlGamepadUpdate(const float deltaTime)
 void MainScene::feedMoveUpdate(const float deltaTime)
 {
     feedPositionX -= 350 * deltaTime;
-
-    //ループ
-    if (feedPositionX <= -200)
-    {
-        feedPositionX = 1500;
-    }
 }
 
 //餌再出現

@@ -52,6 +52,12 @@ private:
     //背景ループ位置
     const float bgResetPosition = 2560.0f;
 
+    //ループカウント
+    int loopCount;
+
+    //プレイ時間
+    float playTime;
+    
 
     //プレイヤー
     //金魚
@@ -109,14 +115,16 @@ private:
     const float   keyboardPlayerDownMoveSpeed  = 30.0f;
     const float   keyboardPlayerRightMoveSpeed = 30.0f;
     const float   keyboardPlayerLeftMoveSpeed  = -30.0f;
-    //パッド
-    const float gamepadButtonPlayerMoveSpeedUp    = -30.0f;
-    const float gamepadButtonPlayerMoveSpeedDown  = 30.0f;
-    const float gamepadButtonPlayerMoveSpeedRight = 30.0f;
-    const float gamepadButtonPlayerMoveSpeedLeft  = -30.0f;
 
-    const float gamepadPlayerMoveSpeedX = 500.0f;
-    const float gamepadPlayerMoveSpeedY = 500.0f;
+    //パッド
+    //十字キー
+    const float gamePadButtonPlayerMoveSpeedUp    = -30.0f;
+    const float gamePadButtonPlayerMoveSpeedDown  = 30.0f;
+    const float gamePadButtonPlayerMoveSpeedRight = 30.0f;
+    const float gamePadButtonPlayerMoveSpeedLeft  = -30.0f;
+    //スティック
+    const float gamePadPlayerMoveSpeedX = 500.0f;
+    const float gamePadPlayerMoveSpeedY = 500.0f;
 
     //慣性
     float playerInertiaX, playerInertiaY;
@@ -252,6 +260,9 @@ private:
 
     //ゴール
     NextScene changeNextSceneUpdate();
+
+    //クリア時間計測
+    void playTimeUpdate(const float deltaTime);
 
 
     //状態遷移割当

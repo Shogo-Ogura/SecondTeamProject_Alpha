@@ -41,6 +41,10 @@ private:
 
     // 変数の宣言
 
+    //クリア画面
+    DX9::SPRITE clearSceneSprite;
 
+    //クリア時間
+    DX9::SPRITEFONT clearTimeFont;
 
 };

@@ -40,7 +40,7 @@ private:
     DX12::HGPUDESCRIPTOR dx9GpuDescriptor;
 
     // •Ï”‚ÌéŒ¾
-
+    DX9::SPRITE gameoverSceneSprite;
 
 
 };

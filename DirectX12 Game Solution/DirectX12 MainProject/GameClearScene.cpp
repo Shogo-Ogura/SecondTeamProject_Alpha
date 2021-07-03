@@ -5,6 +5,7 @@
 #include "Base/pch.h"
 #include "Base/dxtk.h"
 #include "SceneFactory.h"
+#include "DontDestroyOnLoad.h"
 
 // Initialize member variables.
 GameClearScene::GameClearScene() : dx9GpuDescriptor{}
@@ -53,6 +54,12 @@ void GameClearScene::LoadAssets()
 
 
     // グラフィックリソースの初期化処理
+
+    //クリア画面
+    clearSceneSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"clearSceneSprite.png");
+
+    //クリア時間
+    clearTimeFont = DX9::SpriteFont::CreateFromFontName(DXTK->Device9, L"UD デジタル 教科書体 N-B", 50);
 }
 
 // Releasing resources required for termination.
@@ -106,7 +113,12 @@ void GameClearScene::Render()
 
     // (ここに2D描画の処理が入る)     // 手順5
 
+    //クリア画面
+    DX9::SpriteBatch->DrawSimple(clearSceneSprite.Get(), SimpleMath::Vector3(0.0f, 0.0f, 0.0f));
 
+    //クリア時間
+    DX9::SpriteBatch->DrawString(clearTimeFont.Get(), SimpleMath::Vector2(400.0f, 600.0f),
+        DX9::Colors::RGBA(0,0,0,255),L"CLEAR TIME%d",DontDestroy->clearTime);
 
     DX9::SpriteBatch->End();          // 手順6
     DXTK->Direct3D9->EndScene();      // 手順7
