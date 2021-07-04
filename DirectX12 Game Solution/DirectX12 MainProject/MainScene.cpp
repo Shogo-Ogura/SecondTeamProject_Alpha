@@ -323,14 +323,25 @@ void MainScene::Render()
 
     //UI
     //ゲージ
+    //本体
     DX9::SpriteBatch->DrawSimple(gaugeTestSprite.Get(), SimpleMath::Vector3(100, 50, 8),
         RectWH(0.0f, 0.0f, gaugeWidth, 100.0f));
+
+    //枠
     DX9::SpriteBatch->DrawSimple(gaugeBgTestSprite.Get(), SimpleMath::Vector3(100, 50, 9));
 
 
     //デバッグ用
-    DX9::SpriteBatch->DrawString(playerStatusFont.Get(), SimpleMath::Vector2(0, 670), DX9::Colors::RGBA(0, 0, 0, 255), L"wormInitialPositionY:%d", feedInitialPositionY);
-    DX9::SpriteBatch->DrawString(gaugeStageFont.Get(), SimpleMath::Vector2(500.0f, 670.0f), DX9::Colors::RGBA(0, 0, 0, 255), L"obstacleInitialPositionY:%d", obstaclePattern);
+    DX9::SpriteBatch->DrawString
+    (
+        playerStatusFont.Get(), SimpleMath::Vector2(0, 670), 
+        DX9::Colors::RGBA(0, 0, 0, 255), L"wormInitialPositionY:%d", feedInitialPositionY
+    );
+
+    DX9::SpriteBatch->DrawString(
+        gaugeStageFont.Get(), SimpleMath::Vector2(500.0f, 670.0f), 
+        DX9::Colors::RGBA(0, 0, 0, 255), L"obstacleInitialPositionY:%d", obstaclePattern
+    );
 
 
     DX9::SpriteBatch->End();          // 手順6

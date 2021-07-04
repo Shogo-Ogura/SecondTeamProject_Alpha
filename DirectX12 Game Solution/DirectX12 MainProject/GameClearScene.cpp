@@ -118,7 +118,7 @@ void GameClearScene::Render()
 
     //ƒNƒŠƒAŠÔ
     DX9::SpriteBatch->DrawString(clearTimeFont.Get(), SimpleMath::Vector2(400.0f, 600.0f),
-        DX9::Colors::RGBA(0,0,0,255),L"CLEAR TIME%d",DontDestroy->clearTime);
+       DX9::Colors::RGBA(0,0,0,255),L"CLEAR TIME%d",DontDestroy->clearTime);
 
     DX9::SpriteBatch->End();          // è‡6
     DXTK->Direct3D9->EndScene();      // è‡7
