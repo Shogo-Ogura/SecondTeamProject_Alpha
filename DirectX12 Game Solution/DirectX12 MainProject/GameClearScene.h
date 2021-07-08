@@ -49,4 +49,8 @@ private:
     const float clearTimePositionX = 400.0f;
     const float clearTimePositionY = 600.0f;
 
+
+    //ŠÖ”‚ÌéŒ¾
+    //ƒV[ƒ“‘JˆÚ
+    NextScene changeNextSceneUpdate();
 };

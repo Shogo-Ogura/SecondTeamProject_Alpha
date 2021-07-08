@@ -90,7 +90,7 @@ NextScene GameOverScene::Update(const float deltaTime)
     // TODO: Add your game logic here.
     //ゲームを動かすプログラムを記述する
 
-    return changeNextScene();
+    return changeNextSceneUpdate();
 }
 
 // Draws the scene.
@@ -132,11 +132,11 @@ void GameOverScene::Render()
 }
 
 //関数の定義
-NextScene GameOverScene::changeNextScene()
+NextScene GameOverScene::changeNextSceneUpdate()
 {
     if (DXTK->KeyEvent->pressed.Space || (DXTK->GamePadEvent[0].a == GamePad::ButtonStateTracker::PRESSED))
     {
-        return NextScene::MainScene;
+        return NextScene::TitleScene;
     }
 
     return NextScene::Continue;

@@ -44,5 +44,5 @@ private:
 
 
 private:
-    NextScene changeNextScene();
+    NextScene changeNextSceneUpdate();
 };

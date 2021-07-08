@@ -37,12 +37,19 @@ void MainScene::Initialize()
 
     //プレイヤー
     //座標
-    playerPositionX = 100.0f;
-    playerPositionY = 300.0f;
+    playerPositionX = playerInitialPositionX;
+    playerPositionY = playerInitialPositionX;
 
     //慣性
     playerInertiaX = 0.0f;
     playerInertiaY = 0.0f;
+
+    //プレイヤーアニメーション
+    playerSpriteAnimationX = 0;
+    playerSpriteAnimationY = 0;
+
+    //アニメーション速度
+    playerAnimationSpeed = 0.0f;
 
     //高速時間
     speedUpTime = 0.0f;
@@ -56,8 +63,9 @@ void MainScene::Initialize()
 
 
     //餌(アイテム)
-    feedPositionX = 1500.0f;
-    feedPositionY = 300.0f;
+    //初期位置
+    feedPositionX = feedInitialPositionX;
+    feedPositionY = feedInitialPositionY;
 
     //餌位置リセット
     std::random_device rnd_dev;
@@ -66,37 +74,41 @@ void MainScene::Initialize()
 
 
     //障害物
-    //障害物座標
+    //障害物初期位置
     //鳥
-    birdPositionX = 1500.0f;
-    birdPositionY = 300.0f;
+    birdPositionX = obstacleInitialPositionX;
+    birdPositionY = obstacleInitialPositionY;
 
     //岩(大)
-    bigRockPositionX = 1500.0f;
-    bigRockPositionY = 300.0f;
+    bigRockPositionX = obstacleInitialPositionX;
+    bigRockPositionY = obstacleInitialPositionY;
 
     //岩(小)
-    smallRockPositionX = 1500.0f;
-    smallRockPositionY = 300.0f;
+    smallRockPositionX = obstacleInitialPositionX;
+    smallRockPositionY = obstacleInitialPositionY;
 
     //木
-    woodPositionX = 1500.0f;
-    woodPositionY = 300.0f;
+    woodPositionX = obstacleInitialPositionX;
+    woodPositionY = obstacleInitialPositionY;
 
     //障害物状態
     obstacleStatus = bigRockState;
 
     //ランダムリセット座標
     randomObstaclePositionY = std::uniform_real_distribution<float>(obstacleAppearanceTop, obstacleAppearanceBottom);
-    obstacleInitialPositionY = randomObstaclePositionY(randomEngine);
+    obstacleResetPositionY = randomObstaclePositionY(randomEngine);
 
     //ランダム
     randomObstacle = std::uniform_int_distribution<int>(1, 4);
 
 
     //UI
+    //ミニマップ
+    miniMapFishPositionX = miniMapPositionX - miniMapFishScaleX / 2;
+    miniMapFishPositionY = miniMapPositionY - miniMapFishScaleY / 2;
+    
     //ゲージ
-    gaugeWidth = 140;
+    gaugeWidth = firstStage;
 
 
     //ゲームオーバー
@@ -140,14 +152,14 @@ void MainScene::LoadAssets()
     
     
     //プレイヤー
-    //金魚
-    smallFishTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"goldfishTestSprite.png");
+    //小
+    smallFishTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"smallFishSprite.png");
 
-    //ナマズ
+    //中
     //mediumFishTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"catfishTestSprite.png");
     mediumFishTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"mediumFishSprite.png");
 
-    //鯉
+    //大
     largeFishTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"carpTestSprite.png");
 
 
@@ -172,6 +184,10 @@ void MainScene::LoadAssets()
 
 
     //UI
+    //ミニマップ
+    miniMapSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"miniMapSprite.png");
+    miniMapFishTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"miniMapFishTestSprite.png");
+    
     //ゲージ
     gaugeTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"gaugeTestSprite.png");
     gaugeBgTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"gaugeBgTestSprite.png");
@@ -238,7 +254,10 @@ NextScene MainScene::Update(const float deltaTime)
     
 
     //プレイヤー
-    //移動範囲
+    //アニメーション
+    playerAnimationUpdate(deltaTime);
+
+    //移動可能範囲
     playerMoveRangeUpdate();
 
     //自動移動
@@ -263,10 +282,13 @@ NextScene MainScene::Update(const float deltaTime)
     obstacleMoveUpdate(deltaTime);
 
     //障害物ループ
-     obstacleLoopUpdate(deltaTime);
+    obstacleLoopUpdate();
 
 
     //UI
+    //ミニマップ
+    //miniMapMoveUpdate(deltaTime);
+    
     //ゲージ
     gaugeMoveUpdate();
 
@@ -294,17 +316,23 @@ void MainScene::Render()
 
 
     //プレイヤー
-    //金魚
+    //小
     if (gaugeStage == firstStage || gaugeStage == secondStage) {
-        DX9::SpriteBatch->DrawSimple(smallFishTestSprite.Get(), SimpleMath::Vector3(playerPositionX, playerPositionY, -5));
+        DX9::SpriteBatch->DrawSimple(smallFishTestSprite.Get(), SimpleMath::Vector3(playerPositionX, playerPositionY, -5),
+            RectWH(playerSpriteAnimationX, playerSpriteAnimationY, smallFishScaleX, smallFishScaleY)
+        );
     }
-    //ナマズ
+    //中
     if (gaugeStage == thirdStage || gaugeStage == forthStage) {
-        DX9::SpriteBatch->DrawSimple(mediumFishTestSprite.Get(), SimpleMath::Vector3(playerPositionX, playerPositionY, -5));
+        DX9::SpriteBatch->DrawSimple(mediumFishTestSprite.Get(), SimpleMath::Vector3(playerPositionX, playerPositionY, -5),
+            RectWH(playerSpriteAnimationX,playerSpriteAnimationY,mediumFishScaleX,mediumFishScaleY)
+            );
     }
-    //鯉
+    //大
     if (gaugeStage == fifthStage) {
-        DX9::SpriteBatch->DrawSimple(largeFishTestSprite.Get(), SimpleMath::Vector3(playerPositionX, playerPositionY, -5));
+        DX9::SpriteBatch->DrawSimple(largeFishTestSprite.Get(), SimpleMath::Vector3(playerPositionX, playerPositionY, -5),
+            RectWH(playerSpriteAnimationX, playerSpriteAnimationY, largeFishScaleX, largeFishScaleY)
+        );
     }
 
 
@@ -327,6 +355,10 @@ void MainScene::Render()
 
 
     //UI
+    //ミニマップ
+    DX9::SpriteBatch->DrawSimple(miniMapSprite.Get(), SimpleMath::Vector3(miniMapPositionX, miniMapPositionY, -4));
+    DX9::SpriteBatch->DrawSimple(miniMapFishTestSprite.Get(), SimpleMath::Vector3(miniMapFishPositionX, miniMapFishPositionY, -4));
+
     //ゲージ
     //本体
     DX9::SpriteBatch->DrawSimple(gaugeTestSprite.Get(), SimpleMath::Vector3(gaugePositionX, gaugePositionY, 8),
@@ -340,12 +372,12 @@ void MainScene::Render()
     DX9::SpriteBatch->DrawString
     (
         playerStatusFont.Get(), SimpleMath::Vector2(0, 670), 
-        DX9::Colors::RGBA(0, 0, 0, 255), L"playerSpeedStatus:%d", playerSpeedStatus
+        DX9::Colors::RGBA(0, 0, 0, 255), L"bgPositionX:%d", (int)bgPositionX
     );
 
     DX9::SpriteBatch->DrawString(
         gaugeStageFont.Get(), SimpleMath::Vector2(500.0f, 670.0f), 
-        DX9::Colors::RGBA(0, 0, 0, 255), L"speedUpTime:%d", (int)speedUpTime
+        DX9::Colors::RGBA(0, 0, 0, 255), L"playerSpriteAnimationX:%d", playerSpriteAnimationX
     );
 
 
@@ -478,7 +510,7 @@ void MainScene::gaugeStageUpdate(const float deltaTime)
         }
         else if (isObstacleCollisionDetectionUpdate())
         {
-            obstaclePositionResetUpdate(deltaTime);
+            obstaclePositionResetUpdate();
             gaugeStage = firstStage;
         }
         break;
@@ -490,7 +522,7 @@ void MainScene::gaugeStageUpdate(const float deltaTime)
         }
         else if (isObstacleCollisionDetectionUpdate())
         {
-            obstaclePositionResetUpdate(deltaTime);
+            obstaclePositionResetUpdate();
             gaugeStage = secondStage;
         }
         break;
@@ -502,7 +534,7 @@ void MainScene::gaugeStageUpdate(const float deltaTime)
         }
         else if (isObstacleCollisionDetectionUpdate())
         {
-            obstaclePositionResetUpdate(deltaTime);
+            obstaclePositionResetUpdate();
             gaugeStage = thirdStage;
         }
         break;
@@ -514,7 +546,7 @@ void MainScene::gaugeStageUpdate(const float deltaTime)
         }
         else if (isObstacleCollisionDetectionUpdate())
         {
-            obstaclePositionResetUpdate(deltaTime);
+            obstaclePositionResetUpdate();
             gaugeStage = forthStage;
         }
         break;
@@ -523,6 +555,49 @@ void MainScene::gaugeStageUpdate(const float deltaTime)
 
 
 //プレイヤー
+//アニメーション
+void MainScene::playerAnimationUpdate(const float deltaTime)
+{
+    switch (playerSpeedStatus) {
+    case smallFishSpeedState:
+        playerAnimationSpeed += deltaTime;
+        if (playerAnimationSpeed >= 0.05f) 
+        {
+            playerSpriteAnimationX += smallFishScaleX;
+            playerAnimationSpeed = 0.0f;
+        }
+        if (playerSpriteAnimationX == (smallFishScaleX * 8))
+        {
+            playerSpriteAnimationX = 0;
+        }
+        break;
+    case mediumFishSpeedState:
+        playerAnimationSpeed += deltaTime; 
+        if (playerAnimationSpeed >= 0.05f)
+        {
+            playerSpriteAnimationX += mediumFishScaleX;
+            playerAnimationSpeed = 0.0f;
+        }
+        if (playerSpriteAnimationX == (mediumFishScaleX * 8))
+        {
+            playerSpriteAnimationX = 0;
+        }
+        break;
+    case largeFishSpeedState:
+        playerAnimationSpeed += deltaTime;
+        if (playerAnimationSpeed >= 0.05f)
+        {
+            playerSpriteAnimationX += largeFishScaleX;
+            playerAnimationSpeed = 0.0f;
+        }
+        if (playerSpriteAnimationX == (largeFishScaleX * 8))
+        {
+            playerSpriteAnimationX = 0;
+        }
+        break;
+    }
+}
+
 //移動可能範囲
 void MainScene::playerMoveRangeUpdate()
 {
@@ -650,8 +725,8 @@ void MainScene::playerControlGamepadUpdate(const float deltaTime)
     playerPositionY += playerInertiaY;
 
     //スティック
-    playerPositionX += gamePadPlayerMoveSpeedX * DXTK->GamePadState[0].thumbSticks.leftX * deltaTime;
-    playerPositionY -= gamePadPlayerMoveSpeedY * DXTK->GamePadState[0].thumbSticks.leftY * deltaTime;
+    /*playerPositionX += gamePadPlayerMoveSpeedX * DXTK->GamePadState[0].thumbSticks.leftX * deltaTime;
+    playerPositionY -= gamePadPlayerMoveSpeedY * DXTK->GamePadState[0].thumbSticks.leftY * deltaTime;*/
 }
 
 
@@ -687,10 +762,10 @@ void MainScene::feedLoopUpdate()
 //位置リセット
 void MainScene::feedPositionResetUpdate()
 {
-    feedInitialPositionY = randomFeedPositionY(randomEngine);
+    feedResetPositionY = randomFeedPositionY(randomEngine);
 
     feedPositionX = feedInitialPositionX;
-    feedPositionY = feedInitialPositionY;
+    feedPositionY = feedResetPositionY;
 }
 
 //餌当たり判定
@@ -827,56 +902,75 @@ bool MainScene::isObstacleCollisionDetectionUpdate()
 }
 
 //障害物ループ
-void MainScene::obstacleLoopUpdate(const float deltaTime)
+void MainScene::obstacleLoopUpdate()
 {
     if (birdPositionX < obstacleResetPositionX || bigRockPositionX < obstacleResetPositionX || smallRockPositionX < obstacleResetPositionX || woodPositionX < obstacleResetPositionX) 
     {
-        obstaclePositionResetUpdate(deltaTime);
+        obstaclePositionResetUpdate();
     }
 }
 
 //障害物再抽選
-void MainScene::obstacleReLotteryUpdate(const float deltaTime)
+void MainScene::obstacleReLotteryUpdate()
 {
     obstaclePattern = randomObstacle(randomEngine);
     switch (obstaclePattern) {
-    case 1:
+    case birdState:
         obstacleStatus = birdState;
         break;
-    case 2:
+    case bigRockState:
         obstacleStatus = bigRockState;
         break;
-    case 3:
+    case smallRockState:
         obstacleStatus = smallRockState;
         break;
-    case 4:
+    case woodState:
         obstacleStatus = woodState;
         break;
     }
 }
 
 //障害物位置リセット
-void MainScene::obstaclePositionResetUpdate(const float deltaTime)
+void MainScene::obstaclePositionResetUpdate()
 {
-    obstacleReLotteryUpdate(deltaTime);
-    obstacleInitialPositionY = randomObstaclePositionY(randomEngine);
+    obstacleReLotteryUpdate();
+    obstacleResetPositionY = randomObstaclePositionY(randomEngine);
 
     //鳥
     birdPositionX = obstacleInitialPositionX;
-    birdPositionY = obstacleInitialPositionY;
+    birdPositionY = obstacleResetPositionY;
     //岩(大)
     bigRockPositionX = obstacleInitialPositionX;
-    bigRockPositionY = obstacleInitialPositionY;
+    bigRockPositionY = obstacleResetPositionY;
     //岩(小)
     smallRockPositionX = obstacleInitialPositionX;
-    smallRockPositionY = obstacleInitialPositionY;
+    smallRockPositionY = obstacleResetPositionY;
     //木
     woodPositionX = obstacleInitialPositionX;
-    woodPositionY = obstacleInitialPositionY;
+    woodPositionY = obstacleResetPositionY;
 }
 
 
 //UI
+//ミニマップ
+void MainScene::miniMapMoveUpdate(const float deltaTime)
+{
+    switch (playerSpeedStatus) {
+    case smallFishSpeedState:
+        miniMapFishPositionX += smallFishSpeed * deltaTime;
+        break;
+    case mediumFishSpeedState:
+        miniMapFishPositionX += mediumFishSpeed * deltaTime;
+        break;
+    case largeFishSpeedState:
+        miniMapFishPositionX += largeFishSpeed * deltaTime;
+        break;
+    case speedUpState:
+        miniMapFishPositionX += topSpeed * deltaTime;
+        break;
+    }
+}
+
 //ゲージ
 void MainScene::gaugeMoveUpdate()
 {
@@ -918,7 +1012,7 @@ NextScene MainScene::changeClearSceneUpdate()
 }
 
 
-//当たり判定関数
+//当たり判定
 //ベース当たり判定
 bool MainScene::isCollisionDetectionBase(Rect& rect1, Rect& rect2) {
 

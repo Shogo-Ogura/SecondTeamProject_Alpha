@@ -85,6 +85,12 @@ private:
         largeFishScaleY = 170
     };
 
+    //プレイヤーアニメーション
+    int playerSpriteAnimationX, playerSpriteAnimationY;
+
+    //アニメーション速度
+    float playerAnimationSpeed;
+
     //プレイヤー状態
     int playerStatus;
     enum playerState {
@@ -99,16 +105,20 @@ private:
     //スピード状態
     float speedUpTime;
     int playerSpeedStatus;
+    bool speedUp;
     enum playerSpeedState {
         smallFishSpeedState,
         mediumFishSpeedState,
         largeFishSpeedState,
         speedUpState
     };
-    bool speedUp;
 
     //プレイヤー座標
     float playerPositionX, playerPositionY;
+
+    //プレイヤー初期位置
+    const float playerInitialPositionX = 100.0f;
+    const float playerInitialPositionY = 300.0f;
 
     //プレイヤー自動移動速度
     enum { playerAutoMoveSpeed = 300 };
@@ -157,6 +167,7 @@ private:
 
     //餌初期位置
     const float feedInitialPositionX = 1500.0f;
+    const float feedInitialPositionY = 500.0f;
 
     //餌リセット位置
     const float feedResetPositionX = -100.0f;
@@ -164,11 +175,11 @@ private:
     //餌ランダム初期位置
     std::mt19937 randomEngine;
     std::uniform_real_distribution<float> randomFeedPositionY;
-    float feedInitialPositionY;
+    float feedResetPositionY;
 
     //餌出現範囲
     const float feedAppearanceTop = 251.0f;
-    const float feedAppearanceBottom = 1000.0f;
+    const float feedAppearanceBottom = 650.0f;
 
 
     //障害物
@@ -193,13 +204,14 @@ private:
 
     //障害物初期位置
     const float obstacleInitialPositionX = 1500.0f;
+    const float obstacleInitialPositionY = 300.0f;
 
     //障害物リセット位置
     const float obstacleResetPositionX = -300.0f;
 
-    //障害物ランダム初期位置
+    //障害物ランダム位置
     std::uniform_real_distribution<float> randomObstaclePositionY;
-    float obstacleInitialPositionY;
+    float obstacleResetPositionY;
 
     //障害物ランダムパターン
     std::uniform_int_distribution<int> randomObstacle;
@@ -236,6 +248,23 @@ private:
 
 
     //UI
+    //ミニマップ
+    DX9::SPRITE miniMapSprite;
+    enum miniMapScale {
+        miniMapScaleX = 750,
+        miniMapScaleY = 30
+    };
+    DX9::SPRITE miniMapFishTestSprite;
+    enum miniMapFishScale {
+        miniMapFishScaleX = 94,
+        miniMapFishScaleY = 70
+    };
+    const float miniMapPositionX = 100;
+    const float miniMapPositionY = 35;
+    float miniMapFishPositionX, miniMapFishPositionY;
+    const float miniMapFishInitialPositionX = 100;
+    const float miniMapFishInitialPositionY = 10;
+    
     //ゲージ
     DX9::SPRITE gaugeTestSprite;
     DX9::SPRITE gaugeBgTestSprite;
@@ -248,12 +277,12 @@ private:
         forthStage = 560,
         fifthStage = 700
     };
-    const float gaugePositionX = 100.0f;
-    const float gaugePositionY = 50.0f;
+    const float gaugePositionX = 70.0f;
+    const float gaugePositionY = 100.0f;
 
     //シーン遷移
     //ゴール
-    enum { lengthToGoal = 1 };
+    enum { lengthToGoal = 3 };
 
     //ゲームオーバー
     bool gameOver;
@@ -290,6 +319,9 @@ private:
 
 
     //プレイヤー
+    //アニメーション 
+    void playerAnimationUpdate(const float deltaTime);
+
     //移動可能範囲
     void playerMoveRangeUpdate();
     
@@ -339,16 +371,19 @@ private:
     bool isObstacleCollisionDetectionUpdate();
 
     //障害物ループ
-    void obstacleLoopUpdate(const float deltaTime);
+    void obstacleLoopUpdate();
 
     //障害物再抽選
-    void obstacleReLotteryUpdate(const float deltaTime);
+    void obstacleReLotteryUpdate();
 
     //障害物位置リセット
-    void obstaclePositionResetUpdate(const float deltaTime);
+    void obstaclePositionResetUpdate();
 
 
     //UI
+    //ミニマップ
+    void miniMapMoveUpdate(const float deltaTime);
+    
     //ゲージ
     void gaugeMoveUpdate();
 

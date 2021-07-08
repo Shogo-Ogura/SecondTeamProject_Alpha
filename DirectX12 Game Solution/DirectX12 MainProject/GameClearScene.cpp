@@ -94,9 +94,9 @@ NextScene GameClearScene::Update(const float deltaTime)
     // TODO: Add your game logic here.
     //ゲームを動かすプログラムを記述する
 
+    //シーン遷移
+    return changeNextSceneUpdate();
 
-
-    return NextScene::Continue;
 }
 
 // Draws the scene.
@@ -117,7 +117,7 @@ void GameClearScene::Render()
 
     //クリア時間
     DX9::SpriteBatch->DrawString(clearTimeFont.Get(), SimpleMath::Vector2(clearTimePositionX, clearTimePositionY),
-       DX9::Colors::RGBA(0,0,0,255),L"CLEAR TIME%d", DontDestroy->clearTime);
+       DX9::Colors::RGBA(0,0,0,255),L"CLEAR TIME%d", (int)DontDestroy->clearTime);
 
     DX9::SpriteBatch->End();          // 手順6
     DXTK->Direct3D9->EndScene();      // 手順7
@@ -140,4 +140,16 @@ void GameClearScene::Render()
 
     DXTK->Direct3D9->WaitUpdate();
     DXTK->ExecuteCommandList();
+}
+
+
+//関数の定義
+NextScene GameClearScene::changeNextSceneUpdate()
+{
+    if (DXTK->KeyEvent->pressed.Space || (DXTK->GamePadEvent[0].a == GamePad::ButtonStateTracker::PRESSED))
+    {
+        return NextScene::TitleScene;
+    }
+
+    return NextScene::Continue;
 }
