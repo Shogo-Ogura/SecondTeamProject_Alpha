@@ -44,8 +44,11 @@ void MainScene::Initialize()
     playerInertiaX = 0.0f;
     playerInertiaY = 0.0f;
 
-    //無敵時間
+    //高速時間
     speedUpTime = 0.0f;
+
+    //高速フラグ
+    speedUp = false;
 
     //状態
     playerStatus = smallFishState;
@@ -94,6 +97,10 @@ void MainScene::Initialize()
     //UI
     //ゲージ
     gaugeWidth = 140;
+
+
+    //ゲームオーバー
+    gameOver = false;
     
 }
 
@@ -218,8 +225,6 @@ NextScene MainScene::Update(const float deltaTime)
     //スクロール速度割当
     setBgScrollSpeed();
 
-    //ゴール
-    return changeNextSceneUpdate();
 
     //クリア時間計測
     playTimeUpdate(deltaTime);
@@ -250,25 +255,25 @@ NextScene MainScene::Update(const float deltaTime)
     //移動
     feedMoveUpdate(deltaTime);
 
-    //餌再出現
-    feedReAppearanceUpdate(deltaTime);
+    //餌ループ
+    feedLoopUpdate();
 
     //障害物
     //移動
     obstacleMoveUpdate(deltaTime);
 
-    //障害物再出現
-    if (birdPositionX < obstacleResetPositionX || bigRockPositionX < obstacleResetPositionX || smallRockPositionX < obstacleResetPositionX || woodPositionX < obstacleResetPositionX)
-    {
-        obstaclePositionResetUpdate();
-        obstacleReLotteryUpdate(deltaTime);
-    }
+    //障害物ループ
+     obstacleLoopUpdate(deltaTime);
 
 
     //UI
     //ゲージ
     gaugeMoveUpdate();
-   
+
+
+    //シーン遷移
+    return changeClearSceneUpdate();
+
 }
 
 // Draws the scene.
@@ -324,23 +329,23 @@ void MainScene::Render()
     //UI
     //ゲージ
     //本体
-    DX9::SpriteBatch->DrawSimple(gaugeTestSprite.Get(), SimpleMath::Vector3(100, 50, 8),
+    DX9::SpriteBatch->DrawSimple(gaugeTestSprite.Get(), SimpleMath::Vector3(gaugePositionX, gaugePositionY, 8),
         RectWH(0.0f, 0.0f, gaugeWidth, 100.0f));
 
     //枠
-    DX9::SpriteBatch->DrawSimple(gaugeBgTestSprite.Get(), SimpleMath::Vector3(100, 50, 9));
+    DX9::SpriteBatch->DrawSimple(gaugeBgTestSprite.Get(), SimpleMath::Vector3(gaugePositionX, gaugePositionY, 9));
 
 
     //デバッグ用
     DX9::SpriteBatch->DrawString
     (
         playerStatusFont.Get(), SimpleMath::Vector2(0, 670), 
-        DX9::Colors::RGBA(0, 0, 0, 255), L"wormInitialPositionY:%d", feedInitialPositionY
+        DX9::Colors::RGBA(0, 0, 0, 255), L"playerSpeedStatus:%d", playerSpeedStatus
     );
 
     DX9::SpriteBatch->DrawString(
         gaugeStageFont.Get(), SimpleMath::Vector2(500.0f, 670.0f), 
-        DX9::Colors::RGBA(0, 0, 0, 255), L"obstacleInitialPositionY:%d", obstaclePattern
+        DX9::Colors::RGBA(0, 0, 0, 255), L"speedUpTime:%d", (int)speedUpTime
     );
 
 
@@ -375,22 +380,23 @@ void MainScene::bgMoveSpeedUpdate(const float deltaTime)
 {
     switch (playerSpeedStatus) {
     case smallFishSpeedState:
-        bgPositionX -= bgMoveSpeed * deltaTime;
+        bgPositionX -= smallFishSpeed * deltaTime;
         break;
     case mediumFishSpeedState:
-        bgPositionX -= (bgMoveSpeed + 200.0f) * deltaTime;
+        bgPositionX -= mediumFishSpeed * deltaTime;
         break;
     case largeFishSpeedState:
-        bgPositionX -= (bgMoveSpeed + 400.0f) * deltaTime;
+        bgPositionX -= largeFishSpeed * deltaTime;
         break;
     case speedUpState:
-        //speedUpTime += deltaTime;
-        bgPositionX -= (bgMoveSpeed + 600.0f) * deltaTime;
-        /*if (speedUpTime >= 2.0f)
+        speedUpTime += deltaTime;
+        bgPositionX -= topSpeed * deltaTime;
+        if (speedUpTime >= 2.0f)
         {
             speedUpTime = 0.0f;
             playerSpeedStatus = largeFishSpeedState;
-        }*/
+            speedUp = false;
+        }
         break;
     }
 }
@@ -415,13 +421,15 @@ void MainScene::setBgScrollSpeed()
         playerSpeedStatus = mediumFishSpeedState;
         break;
     case largeFishState:
-        playerSpeedStatus = largeFishSpeedState;
+        if (speedUp)
+        {
+            playerSpeedStatus = speedUpState;
+        }
+        else
+            playerSpeedStatus = largeFishSpeedState;
         break;
     }
-    if (playerStatus == largeFishState && feedCollisionDetectionUpdate())
-    {
-        playerSpeedStatus = speedUpState;
-    }
+    
 }
 
 
@@ -439,16 +447,6 @@ void MainScene::gaugePlayerStateAssignUpdate()
     }
 }
 
-//ゴール
-NextScene MainScene::changeNextSceneUpdate()
-{
-    if (loopCount >= 10)
-    {
-        return NextScene::GameClearScene;
-    }
-
-    return NextScene::Continue;
-}
 
 //クリア時間計測
 void MainScene::playTimeUpdate(const float deltaTime)
@@ -462,56 +460,61 @@ void MainScene::gaugeStageUpdate(const float deltaTime)
 {
     switch (gaugeStage) {
     case firstStage:
-        if (feedCollisionDetectionUpdate())
+        if (isFeedCollisionDetectionUpdate())
         {
-            feedReAppearanceUpdate(deltaTime);
+            feedPositionResetUpdate();
             gaugeStage = secondStage;
+        }
+        else if (isObstacleCollisionDetectionUpdate())
+        {
+            gameOver = true;
         }
         break;
     case secondStage:
-        if (feedCollisionDetectionUpdate())
+        if (isFeedCollisionDetectionUpdate())
         {
-            feedReAppearanceUpdate(deltaTime);
+            feedPositionResetUpdate();
             gaugeStage = thirdStage;
         }
-        else if (obstacleCollisionDetectionUpdate())
+        else if (isObstacleCollisionDetectionUpdate())
         {
-            obstacleReAppearanceUpdate(deltaTime);
+            obstaclePositionResetUpdate(deltaTime);
             gaugeStage = firstStage;
         }
         break;
     case thirdStage:
-        if (feedCollisionDetectionUpdate())
+        if (isFeedCollisionDetectionUpdate())
         {
-            feedReAppearanceUpdate(deltaTime);
+            feedPositionResetUpdate();
             gaugeStage = forthStage;
         }
-        else if (obstacleCollisionDetectionUpdate())
+        else if (isObstacleCollisionDetectionUpdate())
         {
-            obstacleReAppearanceUpdate(deltaTime);
+            obstaclePositionResetUpdate(deltaTime);
             gaugeStage = secondStage;
         }
         break;
     case forthStage:
-        if (feedCollisionDetectionUpdate())
+        if (isFeedCollisionDetectionUpdate())
         {
-            feedReAppearanceUpdate(deltaTime);
+            feedPositionResetUpdate();
             gaugeStage = fifthStage;
         }
-        else if (obstacleCollisionDetectionUpdate())
+        else if (isObstacleCollisionDetectionUpdate())
         {
-            obstacleReAppearanceUpdate(deltaTime);
+            obstaclePositionResetUpdate(deltaTime);
             gaugeStage = thirdStage;
         }
         break;
     case fifthStage:
-        if (feedCollisionDetectionUpdate())
+        if (isFeedCollisionDetectionUpdate())
         {
-            feedReAppearanceUpdate(deltaTime);
+            speedUp = true;
+            feedPositionResetUpdate();
         }
-        else if (obstacleCollisionDetectionUpdate())
+        else if (isObstacleCollisionDetectionUpdate())
         {
-            obstacleReAppearanceUpdate(deltaTime);
+            obstaclePositionResetUpdate(deltaTime);
             gaugeStage = forthStage;
         }
         break;
@@ -656,13 +659,26 @@ void MainScene::playerControlGamepadUpdate(const float deltaTime)
 //移動
 void MainScene::feedMoveUpdate(const float deltaTime)
 {
-    feedPositionX -= 350 * deltaTime;
+    switch (playerSpeedStatus) {
+    case smallFishSpeedState:
+        feedPositionX -= feedMoveSpeed * deltaTime;
+        break;
+    case mediumFishSpeedState:
+        feedPositionX -= (feedMoveSpeed + mediumFishSpeed) * deltaTime;
+        break;
+    case largeFishSpeedState:
+        feedPositionX -= (feedMoveSpeed + largeFishSpeed) * deltaTime;
+        break;
+    case speedUpState:
+        feedPositionX -= (feedMoveSpeed + topSpeed) * deltaTime;
+        break;
+    }
 }
 
-//餌再出現
-void MainScene::feedReAppearanceUpdate(const float deltaTime)
+//餌ループ
+void MainScene::feedLoopUpdate()
 {
-    if (feedPositionX <= feedResetPositionX || feedCollisionDetectionUpdate()) 
+    if (feedPositionX <= feedResetPositionX)
     {
         feedPositionResetUpdate();
     }
@@ -678,9 +694,9 @@ void MainScene::feedPositionResetUpdate()
 }
 
 //餌当たり判定
-bool MainScene::feedCollisionDetectionUpdate()
+bool MainScene::isFeedCollisionDetectionUpdate()
 {
-    if (PlayerCollisionDetection(RectWH(feedPositionX, feedPositionY, feedScaleX, feedScaleY)))
+    if (isPlayerCollisionDetection(RectWH(feedPositionX, feedPositionY, feedScaleX, feedScaleY)))
         return true;
     else
         return false;
@@ -693,16 +709,68 @@ void MainScene::obstacleMoveUpdate(const float deltaTime)
 {
     switch (obstacleStatus) {
     case birdState:
-        birdPositionX -= 350 * deltaTime;
+        switch (playerSpeedStatus) {
+        case smallFishSpeedState:
+            birdPositionX -= obstacleMoveSpeed * deltaTime;
+            break;
+        case mediumFishSpeedState:
+            birdPositionX -= (obstacleMoveSpeed + mediumFishSpeed) * deltaTime;
+            break;
+        case largeFishState:
+            birdPositionX -= (obstacleMoveSpeed + largeFishSpeed) * deltaTime;
+            break;
+        case speedUpState:
+            birdPositionX -= (obstacleMoveSpeed + topSpeed) * deltaTime;
+            break;
+        }
         break;
     case bigRockState:
-        bigRockPositionX -= 350 * deltaTime;
+        switch (playerSpeedStatus) {
+        case smallFishSpeedState:
+            bigRockPositionX -= obstacleMoveSpeed * deltaTime;
+            break;
+        case mediumFishSpeedState:
+            bigRockPositionX -= (obstacleMoveSpeed + mediumFishSpeed) * deltaTime;
+            break;
+        case largeFishSpeedState:
+            bigRockPositionX -= (obstacleMoveSpeed + largeFishSpeed) * deltaTime;
+            break;
+        case speedUpState:
+            bigRockPositionX -= (obstacleMoveSpeed + topSpeed) * deltaTime;
+            break;
+        }
         break;
     case smallRockState:
-        smallRockPositionX -= 350 * deltaTime;
+        switch (playerSpeedStatus) {
+        case smallFishSpeedState:
+            smallRockPositionX -= obstacleMoveSpeed * deltaTime;
+            break;
+        case mediumFishSpeedState:
+            smallRockPositionX -= (obstacleMoveSpeed + mediumFishSpeed) * deltaTime;
+            break;
+        case largeFishSpeedState:
+            smallRockPositionX -= (obstacleMoveSpeed + largeFishSpeed) * deltaTime;
+            break;
+        case speedUpState:
+            smallRockPositionX -= (obstacleMoveSpeed + topSpeed) * deltaTime;
+            break;
+        }
         break;
     case woodState:
-        woodPositionX -= 350 * deltaTime;
+        switch (playerSpeedStatus) {
+        case smallFishSpeedState:
+            woodPositionX -= obstacleMoveSpeed * deltaTime;
+            break;
+        case mediumFishSpeedState:
+            woodPositionX -= (obstacleMoveSpeed + mediumFishSpeed) * deltaTime;
+            break;
+        case largeFishSpeedState:
+            woodPositionX -= (obstacleMoveSpeed + largeFishSpeed) * deltaTime;
+            break;
+        case speedUpState:
+            woodPositionX -= (obstacleMoveSpeed + topSpeed) * deltaTime;
+            break;
+        }
         break;
     }
 }
@@ -734,23 +802,23 @@ void MainScene::woodObstacleMoveUpdate(const float deltaTime)
 */
 
 //障害物当たり判定
-bool MainScene::obstacleCollisionDetectionUpdate()
+bool MainScene::isObstacleCollisionDetectionUpdate()
 {
     switch (obstacleStatus) {
     case birdState:
-        if (PlayerCollisionDetection(RectWH(birdPositionX, birdPositionY, birdScaleX, birdScaleY)))
+        if (isPlayerCollisionDetection(RectWH(birdPositionX, birdPositionY, birdScaleX, birdScaleY)))
             return true;
         break;
     case bigRockState:
-        if (PlayerCollisionDetection(RectWH(bigRockPositionX, bigRockPositionY, bigRockScaleX, bigRockScaleY)))
+        if (isPlayerCollisionDetection(RectWH(bigRockPositionX, bigRockPositionY, bigRockScaleX, bigRockScaleY)))
             return true;
         break;
     case smallRockState:
-        if (PlayerCollisionDetection(RectWH(smallRockPositionX, smallRockPositionY, smallRockScaleX, smallRockScaleY)))
+        if (isPlayerCollisionDetection(RectWH(smallRockPositionX, smallRockPositionY, smallRockScaleX, smallRockScaleY)))
             return true;
         break;
     case woodState:
-        if (PlayerCollisionDetection(RectWH(woodPositionX, woodPositionY, woodScaleX, woodScaleY)))
+        if (isPlayerCollisionDetection(RectWH(woodPositionX, woodPositionY, woodScaleX, woodScaleY)))
             return true;
         break;
     }
@@ -758,14 +826,12 @@ bool MainScene::obstacleCollisionDetectionUpdate()
     return false;
 }
 
-//障害物再出現
-void MainScene::obstacleReAppearanceUpdate(const float deltaTime)
+//障害物ループ
+void MainScene::obstacleLoopUpdate(const float deltaTime)
 {
-    if (birdPositionX < obstacleResetPositionX || bigRockPositionX < obstacleResetPositionX || smallRockPositionX < obstacleResetPositionX || woodPositionX < obstacleResetPositionX ||
-        obstacleCollisionDetectionUpdate()) 
+    if (birdPositionX < obstacleResetPositionX || bigRockPositionX < obstacleResetPositionX || smallRockPositionX < obstacleResetPositionX || woodPositionX < obstacleResetPositionX) 
     {
-        obstaclePositionResetUpdate();
-        obstacleReLotteryUpdate(deltaTime);
+        obstaclePositionResetUpdate(deltaTime);
     }
 }
 
@@ -790,8 +856,9 @@ void MainScene::obstacleReLotteryUpdate(const float deltaTime)
 }
 
 //障害物位置リセット
-void MainScene::obstaclePositionResetUpdate()
+void MainScene::obstaclePositionResetUpdate(const float deltaTime)
 {
+    obstacleReLotteryUpdate(deltaTime);
     obstacleInitialPositionY = randomObstaclePositionY(randomEngine);
 
     //鳥
@@ -833,9 +900,27 @@ void MainScene::gaugeMoveUpdate()
 }
 
 
+//シーン遷移
+NextScene MainScene::changeClearSceneUpdate()
+{
+    //クリア
+    if (loopCount >= lengthToGoal)
+    {
+        return NextScene::GameClearScene;
+    }
+    //ゲームオーバー
+    else if (gameOver)
+    {
+        return NextScene::GameOverScene;
+    }
+
+    return NextScene::Continue;
+}
+
+
 //当たり判定関数
 //ベース当たり判定
-bool MainScene::collisionDetectionBase(Rect& rect1, Rect& rect2) {
+bool MainScene::isCollisionDetectionBase(Rect& rect1, Rect& rect2) {
 
     if (rect1.left > rect2.right || rect1.right < rect2.left ||
         rect1.top > rect2.bottom || rect1.bottom < rect2.top) {
@@ -845,7 +930,7 @@ bool MainScene::collisionDetectionBase(Rect& rect1, Rect& rect2) {
 }
 
 //プレイヤーサイズ設定済み当たり判定
-bool MainScene::PlayerCollisionDetection(Rect& rect2)
+bool MainScene::isPlayerCollisionDetection(Rect& rect2)
 {
     Rect goldfishRange = RectWH(playerPositionX, playerPositionY, smallFishScaleX, smallFishScaleY);
     Rect catfishRange = RectWH(playerPositionX, playerPositionY, mediumFishScaleX, mediumFishScaleY);
@@ -853,13 +938,13 @@ bool MainScene::PlayerCollisionDetection(Rect& rect2)
     
     switch (playerStatus) {
     case smallFishState:
-        return collisionDetectionBase(goldfishRange, rect2);
+        return isCollisionDetectionBase(goldfishRange, rect2);
         break;
     case mediumFishState:
-        return collisionDetectionBase(catfishRange, rect2);
+        return isCollisionDetectionBase(catfishRange, rect2);
         break;
     case largeFishState:
-        return collisionDetectionBase(carpRange, rect2);
+        return isCollisionDetectionBase(carpRange, rect2);
         break;
     }
 

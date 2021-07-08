@@ -45,9 +45,12 @@ private:
     //背景
     DX9::SPRITE bgTestSprite;
     float bgPositionX;
-    
+
     //スクロール速度
-    const float bgMoveSpeed = 300.0f;
+    const float smallFishSpeed = 300.0f;
+    const float mediumFishSpeed = 500.0f;
+    const float largeFishSpeed = 700.0f;
+    const float topSpeed = 1300.0f;
 
     //背景ループ位置
     const float bgResetPosition = 2560.0f;
@@ -57,16 +60,16 @@ private:
 
     //プレイ時間
     float playTime;
-    
+
 
     //プレイヤー
-    //金魚
+    //小
     DX9::SPRITE smallFishTestSprite;
 
-    //ナマズ
+    //中
     DX9::SPRITE mediumFishTestSprite;
 
-    //鯉
+    //大
     DX9::SPRITE largeFishTestSprite;
 
     //プレイヤーサイズ
@@ -102,6 +105,7 @@ private:
         largeFishSpeedState,
         speedUpState
     };
+    bool speedUp;
 
     //プレイヤー座標
     float playerPositionX, playerPositionY;
@@ -111,17 +115,17 @@ private:
 
     //プレイヤー移動速度
     //キーボード
-    const float   keyboardPlayerUpMoveSpeed    = -30.0f;
-    const float   keyboardPlayerDownMoveSpeed  = 30.0f;
+    const float   keyboardPlayerUpMoveSpeed = -30.0f;
+    const float   keyboardPlayerDownMoveSpeed = 30.0f;
     const float   keyboardPlayerRightMoveSpeed = 30.0f;
-    const float   keyboardPlayerLeftMoveSpeed  = -30.0f;
+    const float   keyboardPlayerLeftMoveSpeed = -30.0f;
 
     //パッド
     //十字キー
-    const float gamePadButtonPlayerMoveSpeedUp    = -30.0f;
-    const float gamePadButtonPlayerMoveSpeedDown  = 30.0f;
+    const float gamePadButtonPlayerMoveSpeedUp = -30.0f;
+    const float gamePadButtonPlayerMoveSpeedDown = 30.0f;
     const float gamePadButtonPlayerMoveSpeedRight = 30.0f;
-    const float gamePadButtonPlayerMoveSpeedLeft  = -30.0f;
+    const float gamePadButtonPlayerMoveSpeedLeft = -30.0f;
     //スティック
     const float gamePadPlayerMoveSpeedX = 500.0f;
     const float gamePadPlayerMoveSpeedY = 500.0f;
@@ -131,10 +135,10 @@ private:
 
     //プレイヤー移動範囲
     enum playerMoveRange {
-        playerMoveRangeTop    = 251,
+        playerMoveRangeTop = 251,
         playerMoveRangeBottom = 720,
-        playerMoveRangeRight  = 1280,
-        playerMoveRangeLeft   = 0
+        playerMoveRangeRight = 1280,
+        playerMoveRangeLeft = 0
     };
 
 
@@ -147,6 +151,9 @@ private:
         feedScaleX = 80,
         feedScaleY = 70
     };
+
+    //餌移動速度
+    const float feedMoveSpeed = 350.0f;
 
     //餌初期位置
     const float feedInitialPositionX = 1500.0f;
@@ -171,8 +178,8 @@ private:
 
     //岩(大)
     DX9::SPRITE bigRockTestSprite;
-    float bigRockPositionX,bigRockPositionY;
-    
+    float bigRockPositionX, bigRockPositionY;
+
     //岩(小)
     DX9::SPRITE smallRockTestSprite;
     float smallRockPositionX, smallRockPositionY;
@@ -180,6 +187,9 @@ private:
     //木
     DX9::SPRITE woodTestSprite;
     float woodPositionX, woodPositionY;
+
+    //障害物移動速度
+    const float obstacleMoveSpeed = 350.0f;
 
     //障害物初期位置
     const float obstacleInitialPositionX = 1500.0f;
@@ -232,13 +242,22 @@ private:
     float gaugeWidth;
     int gaugeStage;
     enum gaugeState {
-        firstStage  = 140,
+        firstStage = 140,
         secondStage = 280,
-        thirdStage  = 420,
-        forthStage  = 560,
-        fifthStage  = 700
+        thirdStage = 420,
+        forthStage = 560,
+        fifthStage = 700
     };
-    
+    const float gaugePositionX = 100.0f;
+    const float gaugePositionY = 50.0f;
+
+    //シーン遷移
+    //ゴール
+    enum { lengthToGoal = 1 };
+
+    //ゲームオーバー
+    bool gameOver;
+
 
     //デバッグ用
     DX9::SPRITEFONT playerStatusFont;
@@ -258,8 +277,6 @@ private:
     //スクロール速度変更
     void setBgScrollSpeed();
 
-    //ゴール
-    NextScene changeNextSceneUpdate();
 
     //クリア時間計測
     void playTimeUpdate(const float deltaTime);
@@ -290,14 +307,14 @@ private:
     //餌移動
     void feedMoveUpdate(const float deltaTime);
 
-    //餌再出現
-    void feedReAppearanceUpdate(const float deltaTime);
+    //餌ループ
+    void feedLoopUpdate();
 
     //餌位置リセット
     void feedPositionResetUpdate();
     
     //餌当たり判定
-    bool feedCollisionDetectionUpdate();
+    bool isFeedCollisionDetectionUpdate();
 
 
     //障害物
@@ -319,16 +336,16 @@ private:
     */
 
     //障害物当たり判定 
-    bool obstacleCollisionDetectionUpdate();
+    bool isObstacleCollisionDetectionUpdate();
 
-    //障害物再出現
-    void obstacleReAppearanceUpdate(const float deltaTime);
+    //障害物ループ
+    void obstacleLoopUpdate(const float deltaTime);
 
     //障害物再抽選
     void obstacleReLotteryUpdate(const float deltaTime);
 
     //障害物位置リセット
-    void obstaclePositionResetUpdate();
+    void obstaclePositionResetUpdate(const float deltaTime);
 
 
     //UI
@@ -336,11 +353,15 @@ private:
     void gaugeMoveUpdate();
 
 
+    //シーン遷移
+    NextScene changeClearSceneUpdate();
+
+
     //当たり判定関数
     //ベース当たり判定
-    bool collisionDetectionBase(Rect& rect1, Rect& rect2);
+    bool isCollisionDetectionBase(Rect& rect1, Rect& rect2);
 
     //プレイヤー範囲設定済み当たり判定
-    bool PlayerCollisionDetection(Rect& rect2);
+    bool isPlayerCollisionDetection(Rect& rect2);
 
 };

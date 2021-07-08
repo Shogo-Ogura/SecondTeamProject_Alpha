@@ -43,4 +43,6 @@ private:
     DX9::SPRITE gameoverSceneSprite;
 
 
+private:
+    NextScene changeNextScene();
 };

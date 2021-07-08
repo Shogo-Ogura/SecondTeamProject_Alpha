@@ -46,5 +46,7 @@ private:
 
     //ƒNƒŠƒAŽžŠÔ
     DX9::SPRITEFONT clearTimeFont;
+    const float clearTimePositionX = 400.0f;
+    const float clearTimePositionY = 600.0f;
 
 };

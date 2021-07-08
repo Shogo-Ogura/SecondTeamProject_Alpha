@@ -22,7 +22,6 @@ void GameClearScene::Initialize()
     //変数を初期化（具体的な数値を設定する）
     //サウンドを読み込んだりする
 
-
 }
 
 // Allocate all memory the Direct3D and Direct2D resources.
@@ -117,8 +116,8 @@ void GameClearScene::Render()
     DX9::SpriteBatch->DrawSimple(clearSceneSprite.Get(), SimpleMath::Vector3(0.0f, 0.0f, 0.0f));
 
     //クリア時間
-    DX9::SpriteBatch->DrawString(clearTimeFont.Get(), SimpleMath::Vector2(400.0f, 600.0f),
-       DX9::Colors::RGBA(0,0,0,255),L"CLEAR TIME%d",DontDestroy->clearTime);
+    DX9::SpriteBatch->DrawString(clearTimeFont.Get(), SimpleMath::Vector2(clearTimePositionX, clearTimePositionY),
+       DX9::Colors::RGBA(0,0,0,255),L"CLEAR TIME%d", DontDestroy->clearTime);
 
     DX9::SpriteBatch->End();          // 手順6
     DXTK->Direct3D9->EndScene();      // 手順7
