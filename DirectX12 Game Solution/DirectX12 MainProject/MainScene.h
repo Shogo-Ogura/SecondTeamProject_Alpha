@@ -72,22 +72,30 @@ private:
     //大
     DX9::SPRITE largeFishTestSprite;
 
+    DX9::SPRITE fishTestSprite[3];
     //プレイヤーサイズ
     enum playerScale {
-        //金魚
+        //小
         smallFishScaleX = 110,
         smallFishScaleY = 70,
-        //ナマズ
+        //中
         mediumFishScaleX = 170,
         mediumFishScaleY = 105,
-        //鯉
+        //大
         largeFishScaleX = 230,
         largeFishScaleY = 170
     };
+    const int       fishScaleX[4]{ smallFishScaleX, mediumFishScaleX, largeFishScaleX,largeFishScaleX };
+    const int       fishScaleY[4]{ smallFishScaleY,mediumFishScaleY,largeFishScaleY,largeFishScaleY };
+    float       fishSpeed[4];
+
 
     //プレイヤーアニメーション
     int playerSpriteAnimationX, playerSpriteAnimationY;
-
+    //1コマの時間
+    const float playerAnimationFrame = 0.05f;
+    //アニメーションコマ数
+    enum { frameNumber = 8 };
     //アニメーション速度
     float playerAnimationSpeed;
 
@@ -247,6 +255,10 @@ private:
     };
 
 
+    //プレイヤー、餌、障害物Z座標幅
+    const float zPositionWidth = 100.0f;
+
+
     //UI
     //ミニマップ
     DX9::SPRITE miniMapSprite;
@@ -269,7 +281,7 @@ private:
     DX9::SPRITE gaugeTestSprite;
     DX9::SPRITE gaugeBgTestSprite;
     float gaugeWidth;
-    int gaugeStage;
+    int gaugeState;
     enum gaugeState {
         firstStage = 140,
         secondStage = 280,
@@ -282,7 +294,15 @@ private:
 
     //シーン遷移
     //ゴール
-    enum { lengthToGoal = 3 };
+    DX9::SPRITE goalSprite;
+    float goalSpritePositionX, goalSpritePositionY;
+    bool goal;
+    float sceneChangeBuffer;
+    //ゴール距離
+    enum { lengthToGoal = 2 };
+    //ゴール後遷移までの時間
+    const float goalAfterTime = 2.0f;
+
 
     //ゲームオーバー
     bool gameOver;
@@ -308,14 +328,14 @@ private:
 
 
     //クリア時間計測
-    void playTimeUpdate(const float deltaTime);
+    void countPlayTimeUpdate(const float deltaTime);
 
 
     //状態遷移割当
-    void gaugePlayerStateAssignUpdate();
+    int gaugePlayerStateAssignUpdate();
 
     //状態遷移
-    void gaugeStageUpdate(const float deltaTime);
+    int gaugeStateUpdate(const float deltaTime);
 
 
     //プレイヤー
@@ -389,7 +409,7 @@ private:
 
 
     //シーン遷移
-    NextScene changeClearSceneUpdate();
+    NextScene changeNextSceneUpdate(const float deltaTime);
 
 
     //当たり判定関数

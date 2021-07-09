@@ -32,7 +32,7 @@ void MainScene::Initialize()
     DontDestroy->clearTime = 0.0f;
 
     //ゲージ段階
-    gaugeStage = firstStage;
+    gaugeState = firstStage;
 
 
     //プレイヤー
@@ -111,8 +111,16 @@ void MainScene::Initialize()
     gaugeWidth = firstStage;
 
 
+    //ゴール
+    goalSpritePositionX = 400.0f;
+    goalSpritePositionY = 300.0f;
+    goal = false;
+    sceneChangeBuffer = 0.0f;
+
     //ゲームオーバー
     gameOver = false;
+
+
     
 }
 
@@ -153,14 +161,17 @@ void MainScene::LoadAssets()
     
     //プレイヤー
     //小
-    smallFishTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"smallFishSprite.png");
+    //smallFishTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"smallFishSprite.png");
+    fishTestSprite[0] = DX9::Sprite::CreateFromFile(DXTK->Device9, L"smallFishSprite.png");
 
     //中
     //mediumFishTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"catfishTestSprite.png");
     mediumFishTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"mediumFishSprite.png");
+    fishTestSprite[1] = DX9::Sprite::CreateFromFile(DXTK->Device9, L"mediumFishSprite.png");
 
     //大
-    largeFishTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"carpTestSprite.png");
+    //largeFishTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"largeFishSprite1.png");
+    fishTestSprite[2] = DX9::Sprite::CreateFromFile(DXTK->Device9, L"largeFishSprite1.png");
 
 
     //餌(アイテム)
@@ -191,6 +202,10 @@ void MainScene::LoadAssets()
     //ゲージ
     gaugeTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"gaugeTestSprite.png");
     gaugeBgTestSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"gaugeBgTestSprite.png");
+
+
+    //ゴール
+    goalSprite = DX9::Sprite::CreateFromFile(DXTK->Device9, L"goalTestSprite.png");
 
 
     //デバッグ用
@@ -243,17 +258,20 @@ NextScene MainScene::Update(const float deltaTime)
 
 
     //クリア時間計測
-    playTimeUpdate(deltaTime);
+    countPlayTimeUpdate(deltaTime);
 
+
+    //状態遷移
+    gaugeStateUpdate(deltaTime);
 
     //状態遷移割当
-    gaugePlayerStateAssignUpdate();
+    auto old_state = playerStatus;
+    if (old_state != gaugePlayerStateAssignUpdate()) {
+        playerAnimationSpeed   = 0;
+        playerSpriteAnimationX = 0;
+    }
     
-    //状態遷移
-    gaugeStageUpdate(deltaTime);
-    
-
-    //プレイヤー
+       //プレイヤー
     //アニメーション
     playerAnimationUpdate(deltaTime);
 
@@ -294,7 +312,7 @@ NextScene MainScene::Update(const float deltaTime)
 
 
     //シーン遷移
-    return changeClearSceneUpdate();
+    return changeNextSceneUpdate(deltaTime);
 
 }
 
@@ -316,24 +334,29 @@ void MainScene::Render()
 
 
     //プレイヤー
-    //小
-    if (gaugeStage == firstStage || gaugeStage == secondStage) {
-        DX9::SpriteBatch->DrawSimple(smallFishTestSprite.Get(), SimpleMath::Vector3(playerPositionX, playerPositionY, -5),
-            RectWH(playerSpriteAnimationX, playerSpriteAnimationY, smallFishScaleX, smallFishScaleY)
-        );
-    }
-    //中
-    if (gaugeStage == thirdStage || gaugeStage == forthStage) {
-        DX9::SpriteBatch->DrawSimple(mediumFishTestSprite.Get(), SimpleMath::Vector3(playerPositionX, playerPositionY, -5),
-            RectWH(playerSpriteAnimationX,playerSpriteAnimationY,mediumFishScaleX,mediumFishScaleY)
-            );
-    }
-    //大
-    if (gaugeStage == fifthStage) {
-        DX9::SpriteBatch->DrawSimple(largeFishTestSprite.Get(), SimpleMath::Vector3(playerPositionX, playerPositionY, -5),
-            RectWH(playerSpriteAnimationX, playerSpriteAnimationY, largeFishScaleX, largeFishScaleY)
-        );
-    }
+    DX9::SpriteBatch->DrawSimple(
+        fishTestSprite[playerStatus].Get(), SimpleMath::Vector3(playerPositionX, playerPositionY, -(playerPositionY + fishScaleY[playerStatus]) / zPositionWidth),
+        RectWH(playerSpriteAnimationX, playerSpriteAnimationY, fishScaleX[playerStatus], fishScaleY[playerStatus])
+    );
+
+    ////小
+    //if (gaugeStage == firstStage || gaugeStage == secondStage) {
+    //    DX9::SpriteBatch->DrawSimple(smallFishTestSprite.Get(), SimpleMath::Vector3(playerPositionX, playerPositionY, -5),
+    //        RectWH(playerSpriteAnimationX, playerSpriteAnimationY, smallFishScaleX, smallFishScaleY)
+    //    );
+    //}
+    ////中
+    //if (gaugeStage == thirdStage || gaugeStage == forthStage) {
+    //    DX9::SpriteBatch->DrawSimple(mediumFishTestSprite.Get(), SimpleMath::Vector3(playerPositionX, playerPositionY, -5),
+    //        RectWH(playerSpriteAnimationX,playerSpriteAnimationY,mediumFishScaleX,mediumFishScaleY)
+    //        );
+    //}
+    ////大
+    //if (gaugeStage == fifthStage) {
+    //    DX9::SpriteBatch->DrawSimple(largeFishTestSprite.Get(), SimpleMath::Vector3(playerPositionX, playerPositionY, -5),
+    //        RectWH(playerSpriteAnimationX, playerSpriteAnimationY, largeFishScaleX, largeFishScaleY)
+    //    );
+    //}
 
 
     //餌(アイテム)
@@ -342,16 +365,16 @@ void MainScene::Render()
 
     //障害物
     //鳥 
-    DX9::SpriteBatch->DrawSimple(birdTestSprite.Get(), SimpleMath::Vector3(birdPositionX, birdPositionY, -4));
+    DX9::SpriteBatch->DrawSimple(birdTestSprite.Get(), SimpleMath::Vector3(birdPositionX, birdPositionY, -(birdPositionY + birdScaleY) / zPositionWidth));
    
     //岩(大)
-    DX9::SpriteBatch->DrawSimple(bigRockTestSprite.Get(), SimpleMath::Vector3(bigRockPositionX, bigRockPositionY, -4));
+    DX9::SpriteBatch->DrawSimple(bigRockTestSprite.Get(), SimpleMath::Vector3(bigRockPositionX, bigRockPositionY, -(bigRockPositionY + bigRockScaleY) / zPositionWidth));
     
     //岩(小)
-    DX9::SpriteBatch->DrawSimple(smallRockTestSprite.Get(), SimpleMath::Vector3(smallRockPositionX, smallRockPositionY, -400));
+    DX9::SpriteBatch->DrawSimple(smallRockTestSprite.Get(), SimpleMath::Vector3(smallRockPositionX, smallRockPositionY, -(bigRockPositionY + smallRockScaleY) / zPositionWidth));
 
     //木
-    DX9::SpriteBatch->DrawSimple(woodTestSprite.Get(), SimpleMath::Vector3(woodPositionX, woodPositionY, -4));
+    DX9::SpriteBatch->DrawSimple(woodTestSprite.Get(), SimpleMath::Vector3(woodPositionX, woodPositionY, -(woodPositionY + woodScaleY) / zPositionWidth));
 
 
     //UI
@@ -368,11 +391,16 @@ void MainScene::Render()
     DX9::SpriteBatch->DrawSimple(gaugeBgTestSprite.Get(), SimpleMath::Vector3(gaugePositionX, gaugePositionY, 9));
 
 
+    //ゴール
+    if (goal)
+        DX9::SpriteBatch->DrawSimple(goalSprite.Get(), SimpleMath::Vector3(goalSpritePositionX, goalSpritePositionY, -10));
+
+
     //デバッグ用
     DX9::SpriteBatch->DrawString
     (
         playerStatusFont.Get(), SimpleMath::Vector2(0, 670), 
-        DX9::Colors::RGBA(0, 0, 0, 255), L"bgPositionX:%d", (int)bgPositionX
+        DX9::Colors::RGBA(0, 0, 0, 255), L"loopCount:%d", (int)loopCount
     );
 
     DX9::SpriteBatch->DrawString(
@@ -410,6 +438,20 @@ void MainScene::Render()
 //スクロール速度
 void MainScene::bgMoveSpeedUpdate(const float deltaTime)
 {
+    /*if (playerSpeedStatus != speedUpState) {
+        bgPositionX -= fishSpeed[playerSpeedStatus] * deltaTime;
+    }
+    else {
+        speedUpTime += deltaTime;
+        bgPositionX -= topSpeed * deltaTime;
+        if (speedUpTime >= 2.0f)
+        {
+            speedUpTime = 0.0f;
+            playerSpeedStatus = largeFishSpeedState;
+            speedUp = false;
+        }
+    }*/
+
     switch (playerSpeedStatus) {
     case smallFishSpeedState:
         bgPositionX -= smallFishSpeed * deltaTime;
@@ -466,36 +508,38 @@ void MainScene::setBgScrollSpeed()
 
 
 //状態遷移割当
-void MainScene::gaugePlayerStateAssignUpdate()
+int MainScene::gaugePlayerStateAssignUpdate()
 {
-    if (gaugeStage == firstStage || gaugeStage == secondStage) {
+    if (gaugeState == firstStage || gaugeState == secondStage) {
         playerStatus = smallFishState;
     }
-    else if (gaugeStage == thirdStage || gaugeStage == forthStage) {
+    else if (gaugeState == thirdStage || gaugeState == forthStage) {
         playerStatus = mediumFishState;
     }
-    else if (gaugeStage == fifthStage) {
+    else if (gaugeState == fifthStage) {
         playerStatus = largeFishState;
     }
+
+    return playerStatus;
 }
 
 
 //クリア時間計測
-void MainScene::playTimeUpdate(const float deltaTime)
+void MainScene::countPlayTimeUpdate(const float deltaTime)
 {
     DontDestroy->clearTime += deltaTime;
 }
 
 
 //状態遷移
-void MainScene::gaugeStageUpdate(const float deltaTime)
+int MainScene::gaugeStateUpdate(const float deltaTime)
 {
-    switch (gaugeStage) {
+    switch (gaugeState) {
     case firstStage:
         if (isFeedCollisionDetectionUpdate())
         {
             feedPositionResetUpdate();
-            gaugeStage = secondStage;
+            gaugeState = secondStage;
         }
         else if (isObstacleCollisionDetectionUpdate())
         {
@@ -506,36 +550,36 @@ void MainScene::gaugeStageUpdate(const float deltaTime)
         if (isFeedCollisionDetectionUpdate())
         {
             feedPositionResetUpdate();
-            gaugeStage = thirdStage;
+            gaugeState = thirdStage;
         }
         else if (isObstacleCollisionDetectionUpdate())
         {
             obstaclePositionResetUpdate();
-            gaugeStage = firstStage;
+            gaugeState = firstStage;
         }
         break;
     case thirdStage:
         if (isFeedCollisionDetectionUpdate())
         {
             feedPositionResetUpdate();
-            gaugeStage = forthStage;
+            gaugeState = forthStage;
         }
         else if (isObstacleCollisionDetectionUpdate())
         {
             obstaclePositionResetUpdate();
-            gaugeStage = secondStage;
+            gaugeState = secondStage;
         }
         break;
     case forthStage:
         if (isFeedCollisionDetectionUpdate())
         {
             feedPositionResetUpdate();
-            gaugeStage = fifthStage;
+            gaugeState = fifthStage;
         }
         else if (isObstacleCollisionDetectionUpdate())
         {
             obstaclePositionResetUpdate();
-            gaugeStage = thirdStage;
+            gaugeState = thirdStage;
         }
         break;
     case fifthStage:
@@ -547,10 +591,12 @@ void MainScene::gaugeStageUpdate(const float deltaTime)
         else if (isObstacleCollisionDetectionUpdate())
         {
             obstaclePositionResetUpdate();
-            gaugeStage = forthStage;
+            gaugeState = forthStage;
         }
         break;
     }
+
+    return gaugeState;
 }
 
 
@@ -558,15 +604,26 @@ void MainScene::gaugeStageUpdate(const float deltaTime)
 //アニメーション
 void MainScene::playerAnimationUpdate(const float deltaTime)
 {
-    switch (playerSpeedStatus) {
+    playerAnimationSpeed += deltaTime;
+    if (playerAnimationSpeed >= playerAnimationFrame)
+    {
+        playerSpriteAnimationX += fishScaleX[playerSpeedStatus];
+        playerAnimationSpeed = 0.0f;
+    }
+    if (playerSpriteAnimationX >= (fishScaleX[playerSpeedStatus] * 8))
+    {
+        playerSpriteAnimationX = 0;
+    }
+
+    /*switch (playerSpeedStatus) {
     case smallFishSpeedState:
         playerAnimationSpeed += deltaTime;
         if (playerAnimationSpeed >= 0.05f) 
         {
-            playerSpriteAnimationX += smallFishScaleX;
+            playerSpriteAnimationX += fishScaleX[playerSpeedStatus];
             playerAnimationSpeed = 0.0f;
         }
-        if (playerSpriteAnimationX == (smallFishScaleX * 8))
+        if (playerSpriteAnimationX >= (fishScaleX[playerSpeedStatus] * 8))
         {
             playerSpriteAnimationX = 0;
         }
@@ -595,7 +652,7 @@ void MainScene::playerAnimationUpdate(const float deltaTime)
             playerSpriteAnimationX = 0;
         }
         break;
-    }
+    }*/
 }
 
 //移動可能範囲
@@ -974,7 +1031,7 @@ void MainScene::miniMapMoveUpdate(const float deltaTime)
 //ゲージ
 void MainScene::gaugeMoveUpdate()
 {
-    switch (gaugeStage) {
+    switch (gaugeState) {
     case firstStage:
         gaugeWidth = firstStage;
         break;
@@ -995,17 +1052,21 @@ void MainScene::gaugeMoveUpdate()
 
 
 //シーン遷移
-NextScene MainScene::changeClearSceneUpdate()
+NextScene MainScene::changeNextSceneUpdate(const float deltaTime)
 {
     //クリア
     if (loopCount >= lengthToGoal)
     {
-        return NextScene::GameClearScene;
+        sceneChangeBuffer += deltaTime;
+        goal = true;
+        if (sceneChangeBuffer >= goalAfterTime) {
+            return NextScene::GameClearScene;
+        }
     }
     //ゲームオーバー
     else if (gameOver)
     {
-        return NextScene::GameOverScene;
+        //return NextScene::GameOverScene;
     }
 
     return NextScene::Continue;
